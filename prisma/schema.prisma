@@ -1,15 +1,82 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db?mode=memory"
+}
+
+enum AccountRoles {
+  CLIENT
+  ADMIN
+}
+
+enum CompanyType {
+  DIGITAL_MARKETING_AGENCY
+  SERVICE_COMPANY
+  BUSINESS
+  STARTUP
+}
+
+enum CompanyCustomers {
+  C1_10
+  C11_20
+  C21_50
+  C51_100
+  C100P
+}
+
+enum CompanyEmployees {
+  JUST_ME
+  C1_10
+  C11_20
+  C21_50
+  C51_100
+  C100P
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+enum PaymentPlan {
+  STANDARD
+  PLUS
+  PREMIUM
+}
+
+model Company {
+  companyid        String           @id @default(uuid())
+  companyname      String
+  companycnpj      String           @unique
+  companytype      CompanyType
+  companycustomers CompanyCustomers
+  companyemployees CompanyEmployees
+  Accounts         Accounts[]
+}
+
+model Accounts {
+  acountid         String       @id @default(uuid())
+  createAt         DateTime     @default(now())
+  username         String       @unique
+  email            String       @unique
+  password         String
+  role             AccountRoles
+  company          Company      @relation(fields: [companyCompanyid], references: [companyid])
+  companyCompanyid String
+
+  @@index([email])
+}
+
+model IntentAccount {
+  intentid      String        @id @default(uuid())
+  createAt      DateTime      @default(now())
+  email         String        @unique
+  paymentid     String        @unique
+  plan          PaymentPlan
+  paymentstatus PaymentStatus @default(PENDING)
+
+  @@index([email])
 }
