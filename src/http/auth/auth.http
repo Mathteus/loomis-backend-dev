@@ -1,0 +1,60 @@
+### signup
+POST http://localhost:3000/auth/signup
+Content-Type: application/json
+x-api-key: ef43.b2a724419d1.4ab7adf0d072b03b4z.PgEq6pFh%z?8L7CK5EJd-gPu!@
+
+{
+  "username": "Matheus Henrique",
+  "password": "A54faf4g4gdsgds4s%#@",
+  "email": "Matheus.Henrique@email.com",
+  "companyType": "SERVICE_COMPANY",
+  "companyname": "Shosans",
+  "companyCNPJ": "84.172.252/0001-98",
+  "companyCustomers": "100+",
+  "companyEmployees": "21_50"
+}
+
+### Signin
+POST http://localhost:3000/auth/signin
+Content-Type: application/json
+x-api-key: ef43.b2a724419d1.4ab7adf0d072b03b4z.PgEq6pFh%z?8L7CK5EJd-gPu!@
+
+{
+  "email": "Matheus.Henrique@email.com",
+  "password": "A54faf4g4gdsgds4s%#@"
+}
+
+### refresh
+POST http://localhost:3000/auth/refresh
+Content-Type: application/json
+x-api-key: ef43.b2a724419d1.4ab7adf0d072b03b4z.PgEq6pFh%z?8L7CK5EJd-gPu!@
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik1hdGhldXMgSGVucmlxdWUiLCJzdWIiOiI4ZTQxMjYxNC1mYmU3LTQ4MjgtYTQwYy0zNTg0MjlkZTgxNzIiLCJ0eXBlIjoiQUNDRVNTIiwiaWF0IjoxNzU1MzE0NjA5LCJleHAiOjE3NTUzMzYyMDl9.1r3eyq-rmAApFJ3z_X5YeSV26DST9lb3MF3DnXjRqCE
+
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik1hdGhldXMgSGVucmlxdWUiLCJzdWIiOiI4ZTQxMjYxNC1mYmU3LTQ4MjgtYTQwYy0zNTg0MjlkZTgxNzIiLCJ0eXBlIjoiUkVGUkVTSCIsImlhdCI6MTc1NTMxNDYwOSwiZXhwIjoxNzU1MzU3ODA5fQ.0330EjvKJz5dfx_1oI8dbHd8P4CIVbdUwkKHCQaJn2I"
+}
+
+### get all accounts
+GET http://localhost:3000/auth/all
+Content-Type: application/json
+x-api-key: ef43.b2a724419d1.4ab7adf0d072b03b4z.PgEq6pFh%z?8L7CK5EJd-gPu!@
+
+### reset password
+POST http://localhost:3000/auth/reset-password
+Content-Type: application/json
+x-api-key: ef43.b2a724419d1.4ab7adf0d072b03b4z.PgEq6pFh%z?8L7CK5EJd-gPu!@
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MWM4MWM0ZC1jYWU3LTQ0YzMtYWEwOC00NGQxYjNjYmYxZDIiLCJpYXQiOjE3NTUyMzAzNDksImV4cCI6MTc1NTIzMDY0OX0.HiadMhxmok65yZY30Hc3G-STwsr7Nh9cYceaU8BaIzk
+
+{
+  "newPassword": "askdjhksadsjaads"
+}
+
+
+### forgot-password
+POST http://localhost:3000/auth/forgot-password
+Content-Type: application/json
+x-api-key: ef43.b2a724419d1.4ab7adf0d072b03b4z.PgEq6pFh%z?8L7CK5EJd-gPu!@
+
+{
+  
+}
