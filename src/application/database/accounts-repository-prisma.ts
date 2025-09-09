@@ -7,6 +7,7 @@ import {
 } from '../repositories/accounts-repository';
 import { PrismaService } from './config/prisma.service';
 import { AuthUserNotExists } from '@/http/auth/auth.errors';
+import { AccountRoles } from '@prisma/client';
 
 @Injectable()
 export class PrismaAccountsRepository implements AccountsRepository {
@@ -28,7 +29,7 @@ export class PrismaAccountsRepository implements AccountsRepository {
         username: newUser.username,
         email: newUser.email,
         password: newUser.password,
-        role: newUser.getRoleString(),
+        role: newUser.getRoleString() as AccountRoles,
         companyCompanyid: response.companyid,
       },
     });

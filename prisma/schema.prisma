@@ -7,6 +7,11 @@ datasource db {
   url      = "file:./dev.db?mode=memory"
 }
 
+enum Gender {
+  F
+  M
+}
+
 enum AccountRoles {
   CLIENT
   ADMIN
@@ -45,6 +50,20 @@ enum PaymentPlan {
   STANDARD
   PLUS
   PREMIUM
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+}
+
+enum ScheduledStatus {
+  PENDING
+  SENT
+  CANCELED
 }
 
 model Company {
@@ -114,4 +133,77 @@ model ItemPipe {
   pipelineId     String
 
   @@index([pipelineId])
+}
+
+// Contacts are attached to a company; fetch by account via its company id
+model Contact {
+  contactId      String  @id @default(uuid())
+  username       String
+  collaboratorId String
+  phone          String
+  email          String
+  document_rg    String
+  document_cpf   String
+  birthday       DateTime
+  genere         Gender
+  city           String
+  state          String
+  companyId      String
+  origin         String
+
+  @@index([companyId])
+}
+
+// Conversation between two account ids; store pair in sorted order a<=b
+model Conversation {
+  id             String    @id @default(uuid())
+  participantAId String
+  participantBId String
+  createdAt      DateTime  @default(now())
+  messages       Message[]
+
+  @@index([participantAId])
+  @@index([participantBId])
+  @@unique([participantAId, participantBId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String
+  receiverId     String
+  contentType    MessageType
+  contentData    String
+  timestamp      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model QuickMessage {
+  id          String      @id @default(uuid())
+  accountId   String
+  title       String?
+  contentType MessageType
+  contentData String
+  createdAt   DateTime    @default(now())
+
+  @@index([accountId])
+}
+
+model ScheduledMessage {
+  id          String          @id @default(uuid())
+  senderId    String
+  receiverId  String
+  contentType MessageType
+  contentData String
+  scheduleAt  DateTime
+  status      ScheduledStatus @default(PENDING)
+  createdAt   DateTime        @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([scheduleAt])
 }
