@@ -12,6 +12,17 @@ import { PaymentsService } from './http/payments/payments.service';
 import { PaymentsModule } from './http/payments/payments.module';
 import { WebhooksController } from './http/webhooks/webhooks.controller';
 import { WebhooksService } from './http/webhooks/webhooks.service';
+import { Controller } from './src/http/.controller';
+import { ServiceController } from './http/chat/service.controller';
+import { ServiceService } from './http/chat/service.service';
+import { ServiceModule } from './http/chat/service.module';
+import { SModule } from './co/s/s.module';
+import { ChatController } from './http/chat/chat.controller';
+import { ChatService } from './http/chat/chat.service';
+import { ChatModule } from './http/chat/chat.module';
+import { FunnelController } from './http/funnel/funnel.controller';
+import { FunnelService } from './http/funnel/funnel/funnel.service';
+import { FunnelModule } from './http/funnel/funnel.module';
 
 @Module({
   imports: [
@@ -43,6 +54,10 @@ import { WebhooksService } from './http/webhooks/webhooks.service';
     AuthModule,
     PassportModule,
     PaymentsModule,
+    ServiceModule,
+    SModule,
+    ChatModule,
+    FunnelModule,
   ],
   providers: [
     {
@@ -51,7 +66,10 @@ import { WebhooksService } from './http/webhooks/webhooks.service';
     },
     PaymentsService,
     WebhooksService,
+    ServiceService,
+    ChatService,
+    FunnelService,
   ],
-  controllers: [PaymentsController, WebhooksController],
+  controllers: [PaymentsController, WebhooksController, Controller, ServiceController, ChatController, FunnelController],
 })
 export class AppModule {}
