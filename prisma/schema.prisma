@@ -66,6 +66,7 @@ model Accounts {
   role             AccountRoles
   company          Company      @relation(fields: [companyCompanyid], references: [companyid])
   companyCompanyid String
+  funnels          Funnel[]
 
   @@index([email])
 }
@@ -79,4 +80,38 @@ model IntentAccount {
   paymentstatus PaymentStatus @default(PENDING)
 
   @@index([email])
+}
+
+model Funnel {
+  funnelid  String    @id @default(uuid())
+  title     String
+  account   Accounts  @relation(fields: [accountId], references: [acountid])
+  accountId String
+  pipelines Pipeline[]
+
+  @@index([accountId])
+}
+
+model Pipeline {
+  pipeid    String   @id @default(uuid())
+  title     String
+  isDefaut  Boolean  @default(false)
+  headColor String
+  funnel    Funnel   @relation(fields: [funnelId], references: [funnelid], onDelete: Cascade)
+  funnelId  String
+  items     ItemPipe[]
+
+  @@index([funnelId])
+}
+
+model ItemPipe {
+  itemid         String   @id @default(uuid())
+  contactId      String
+  collaboratorId String
+  amount         Float
+  tags           String   @default("[]")
+  pipeline       Pipeline @relation(fields: [pipelineId], references: [pipeid], onDelete: Cascade)
+  pipelineId     String
+
+  @@index([pipelineId])
 }
