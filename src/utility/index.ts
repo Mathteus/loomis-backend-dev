@@ -2,6 +2,8 @@ export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export type Replace<T, U> = Omit<T, keyof U> & U;
+
 export function validarCNPJ(cnpj: string): boolean {
   const numerosCNPJ = cnpj.replace(/\D/g, '');
 
