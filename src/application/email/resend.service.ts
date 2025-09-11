@@ -9,7 +9,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import { render } from '@react-email/render';
 import { EmailRecoveryCode } from '../templates-email/recovery-password';
-import { CodeGeneratorService } from '@/common/code-generator/code-generator.service';
+import { CodeGeneratorService } from '@/common/code-generator/code-generator';
 import { EmailFirstAcces } from '../templates-email/first-login';
 
 @Injectable()
