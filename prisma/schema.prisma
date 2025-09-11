@@ -4,17 +4,12 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db?mode=memory"
-}
-
-enum Gender {
-  F
-  M
+  url      = env("DATABASE_URL")
 }
 
 enum AccountRoles {
-  CLIENT
   ADMIN
+  CLIENT
 }
 
 enum CompanyType {
@@ -52,22 +47,8 @@ enum PaymentPlan {
   PREMIUM
 }
 
-enum MessageType {
-  TEXT
-  IMAGE
-  VIDEO
-  AUDIO
-  FILE
-}
-
-enum ScheduledStatus {
-  PENDING
-  SENT
-  CANCELED
-}
-
 model Company {
-  companyid        String           @id @default(uuid())
+  companyid        String           @id
   companyname      String
   companycnpj      String           @unique
   companytype      CompanyType
@@ -77,15 +58,15 @@ model Company {
 }
 
 model Accounts {
-  acountid         String       @id @default(uuid())
+  acountid         String       @id
   createAt         DateTime     @default(now())
   username         String       @unique
   email            String       @unique
   password         String
-  role             AccountRoles
-  company          Company      @relation(fields: [companyCompanyid], references: [companyid])
+  role             AccountRoles @default(CLIENT)
   companyCompanyid String
-  funnels          Funnel[]
+  company          Company      @relation(fields: [companyCompanyid], references: [companyid])
+  Funnel           Funnel[]
 
   @@index([email])
 }
@@ -102,56 +83,66 @@ model IntentAccount {
 }
 
 model Funnel {
-  funnelid  String    @id @default(uuid())
+  funnelid   String     @id @default(uuid())
   title     String
-  account   Accounts  @relation(fields: [accountId], references: [acountid])
   accountId String
+  account   Accounts   @relation(fields: [accountId], references: [acountid])
   pipelines Pipeline[]
+  orderPipes String     @default("[]")
 
   @@index([accountId])
+  @@map("Funnels")
 }
 
 model Pipeline {
-  pipeid    String   @id @default(uuid())
+  pipeid    String     @id @default(uuid())
   title     String
-  isDefaut  Boolean  @default(false)
+  isDefaut  Boolean    @default(false)
   headColor String
-  funnel    Funnel   @relation(fields: [funnelId], references: [funnelid], onDelete: Cascade)
   funnelId  String
   items     ItemPipe[]
+  funnel    Funnel     @relation(fields: [funnelId], references: [funnelid], onDelete: Cascade)
 
   @@index([funnelId])
+  @@map("Pipelines")
 }
 
 model ItemPipe {
   itemid         String   @id @default(uuid())
+  title          String
   contactId      String
   collaboratorId String
   amount         Float
   tags           String   @default("[]")
-  pipeline       Pipeline @relation(fields: [pipelineId], references: [pipeid], onDelete: Cascade)
+  accountId      String
   pipelineId     String
+  pipeline       Pipeline @relation(fields: [pipelineId], references: [pipeid], onDelete: Cascade)
 
   @@index([pipelineId])
+  @@map("Opportunities")
 }
 
-// Contacts are attached to a company; fetch by account via its company id
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+}
+
+enum ScheduledStatus {
+  PENDING
+  SENT
+  CANCELED
+}
+
 model Contact {
-  contactId      String  @id @default(uuid())
+  contactId      String @id
   username       String
   collaboratorId String
   phone          String
   email          String
-  document_rg    String
-  document_cpf   String
-  birthday       DateTime
-  genere         Gender
-  city           String
-  state          String
   companyId      String
-  origin         String
-
-  @@index([companyId])
 }
 
 // Conversation between two account ids; store pair in sorted order a<=b
@@ -162,9 +153,9 @@ model Conversation {
   createdAt      DateTime  @default(now())
   messages       Message[]
 
+  @@unique([participantAId, participantBId])
   @@index([participantAId])
   @@index([participantBId])
-  @@unique([participantAId, participantBId])
 }
 
 model Message {
