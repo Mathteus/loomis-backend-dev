@@ -7,22 +7,19 @@ import { APP_GUARD } from '@nestjs/core';
 import { PassportModule } from '@nestjs/passport';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-ioredis-yet';
-import { PaymentsController } from './http/payments/payments.controller';
-import { PaymentsService } from './http/payments/payments.service';
-import { PaymentsModule } from './http/payments/payments.module';
 import { WebhooksController } from './http/webhooks/webhooks.controller';
 import { WebhooksService } from './http/webhooks/webhooks.service';
-import { Controller } from './src/http/.controller';
-import { ServiceController } from './http/chat/service.controller';
-import { ServiceService } from './http/chat/service.service';
-import { ServiceModule } from './http/chat/service.module';
-import { SModule } from './co/s/s.module';
 import { ChatController } from './http/chat/chat.controller';
 import { ChatService } from './http/chat/chat.service';
 import { ChatModule } from './http/chat/chat.module';
 import { FunnelController } from './http/funnel/funnel.controller';
-import { FunnelService } from './http/funnel/funnel/funnel.service';
+import { FunnelService } from './http/funnel/funnel.service';
 import { FunnelModule } from './http/funnel/funnel.module';
+import { PermissionsGuard } from './http/auth/permissions.guard';
+import { HashGeneratorService } from './common/hash/hash-generator.service';
+import { RedisService } from './application/database/config/redis.service';
+import { RedisRefreshTokensService } from './application/database/redis-refresh-token';
+import { EnviromentService } from './application/env/env.service';
 
 @Module({
   imports: [
@@ -53,9 +50,6 @@ import { FunnelModule } from './http/funnel/funnel.module';
     }),
     AuthModule,
     PassportModule,
-    PaymentsModule,
-    ServiceModule,
-    SModule,
     ChatModule,
     FunnelModule,
   ],
@@ -64,12 +58,19 @@ import { FunnelModule } from './http/funnel/funnel.module';
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
-    PaymentsService,
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
+    },
     WebhooksService,
-    ServiceService,
     ChatService,
     FunnelService,
+    HashGeneratorService,
+    RedisService,
+    RedisRefreshTokensService,
+    EnviromentService,
   ],
-  controllers: [PaymentsController, WebhooksController, Controller, ServiceController, ChatController, FunnelController],
+  controllers: [WebhooksController, ChatController, FunnelController],
+  exports: [HashGeneratorService],
 })
 export class AppModule {}
