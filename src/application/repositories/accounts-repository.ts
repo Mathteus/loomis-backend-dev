@@ -9,6 +9,7 @@ export interface IVerifyUserReponse {
   acountid: string;
   hash: string;
   username: string;
+  role?: string;
 }
 
 export interface IAccount {
@@ -23,11 +24,8 @@ export interface IAccount {
 @Injectable()
 export abstract class AccountsRepository {
   abstract registerAccount(newUser: AccountEntity): Promise<void>;
-
   abstract searchAccountByEmail(email: string): Promise<IVerifyUserReponse>;
-
   abstract searchAccountById(id: string): Promise<IVerifyUserReponse>;
-
   abstract getAllAccounts(): Promise<Array<IAccount>>;
   abstract changePasswordFromAccount(
     accountId: string,

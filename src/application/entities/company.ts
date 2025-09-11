@@ -1,4 +1,6 @@
-import { validarCNPJ } from '@/utility';
+import { IdentifiersGeneratorService } from '@/common/identifiers/identifier-generator';
+import { NanoidGeneratorService } from '@/common/identifiers/nanoid-generator.service';
+import { Replace, validarCNPJ } from '@/utility';
 import {
   CompanyCustomers,
   CompanyEmployees,
@@ -42,6 +44,7 @@ export enum companyEmployeesEnum {
 }
 
 export interface ICompany {
+  companyId: string;
   companyName: string;
   companyCNPJ: string;
   companyEmplooyes: companyEmployeesEnum;
@@ -51,11 +54,27 @@ export interface ICompany {
 
 export class CompanyEntity {
   private _company: ICompany;
+  private _idenfier: IdentifiersGeneratorService;
 
-  constructor(company: ICompany) {
+  constructor(
+    company: Replace<
+      ICompany,
+      {
+        companyId?: string;
+      }
+    >,
+  ) {
     this.verifyCompanyName(company.companyName);
     this.verifyCompanyCNPJ(company.companyCNPJ);
-    this._company = company;
+    this._idenfier = new NanoidGeneratorService();
+    this._company = {
+      companyId: company.companyId ?? this._idenfier.generate('companies'),
+      companyName: company.companyName,
+      companyCNPJ: company.companyCNPJ,
+      companyEmplooyes: company.companyEmplooyes,
+      companyCustomes: company.companyCustomes,
+      companyType: company.companyType,
+    };
   }
 
   private verifyCompanyName(name: string) {
@@ -68,6 +87,10 @@ export class CompanyEntity {
     if (!validarCNPJ(document)) {
       throw new ErrorCompanyCNPJInvalid();
     }
+  }
+
+  public get companyId(): string {
+    return this._company.companyId;
   }
 
   public get companyName(): string {
@@ -125,17 +148,13 @@ export class CompanyEntity {
   public getTypeString(): CompanyType {
     switch (this._company.companyType) {
       case companyTypeEnum.BUSINESS:
-        return companyTypeEnum.BUSINESS;
+        return 'BUSINESS';
       case companyTypeEnum.DIGITAL_MARKETING_AGENCY:
-        return companyTypeEnum.DIGITAL_MARKETING_AGENCY;
+        return 'DIGITAL_MARKETING_AGENCY';
       case companyTypeEnum.SERVICE_COMPANY:
-        return companyTypeEnum.SERVICE_COMPANY;
+        return 'SERVICE_COMPANY';
       case companyTypeEnum.STARTUP:
-        return companyTypeEnum.STARTUP;
+        return 'STARTUP';
     }
-  }
-
-  public toString() {
-    return JSON.stringify(this._company);
   }
 }

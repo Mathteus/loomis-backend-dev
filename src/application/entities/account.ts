@@ -1,6 +1,7 @@
-import { Roles } from '@prisma/client';
 import { CompanyEntity } from './company';
-import { isEmailValido } from '@/utility';
+import { isEmailValido, Replace } from '@/utility';
+import { IdentifiersGeneratorService } from '@/common/identifiers/identifier-generator';
+import { NanoidGeneratorService } from '@/common/identifiers/nanoid-generator.service';
 
 export class ErrorUsernameMinLength extends Error {
   constructor() {
@@ -20,27 +21,46 @@ export class ErrorEmailInvalid extends Error {
   }
 }
 
-export enum RolesType {
-  client = 'CLIENT',
-  admin = 'ADMIN',
-}
-
 export interface IAccount {
+  accountId: string;
   username: string;
   password: string;
-  userrole: RolesType;
   company: CompanyEntity;
   email: string;
+  contactId: string[];
+  lastPayment?: Date;
+  createAt: Date;
 }
 
 export class AccountEntity {
   private _accoount: IAccount;
+  private _idenfier: IdentifiersGeneratorService;
 
-  constructor(account: IAccount) {
+  constructor(
+    account: Replace<
+      IAccount,
+      {
+        accountId?: string;
+        contactId?: string[];
+        lastPayment?: Date;
+        createAt?: Date;
+      }
+    >,
+  ) {
     this.verifyUsername(account.username);
     this.verifyPassword(account.password);
     this.verifyEmail(account.email);
-    this._accoount = account;
+    this._idenfier = new NanoidGeneratorService();
+    this._accoount = {
+      accountId: account.accountId ?? this._idenfier.generate('accounts'),
+      username: account.username,
+      password: account.password,
+      company: account.company,
+      email: account.email,
+      contactId: account.contactId ?? [],
+      lastPayment: account.lastPayment,
+      createAt: account.createAt ?? new Date(),
+    };
   }
 
   private verifyUsername(username: string) {
@@ -61,6 +81,10 @@ export class AccountEntity {
     }
   }
 
+  public get accountId(): string {
+    return this._accoount.accountId;
+  }
+
   public get username(): string {
     return this._accoount.username;
   }
@@ -73,28 +97,26 @@ export class AccountEntity {
     return this._accoount.company;
   }
 
-  public get userrole(): RolesType {
-    return this._accoount.userrole;
+  public get contactId(): string[] {
+    return this._accoount.contactId;
+  }
+
+  public get lastPayment(): Date | undefined {
+    return this._accoount.lastPayment;
+  }
+
+  public get createAt(): Date {
+    return this._accoount.createAt;
   }
 
   public get email(): string {
     return this._accoount.email;
   }
 
-  public getRoleString(): Roles {
-    switch (this._accoount.userrole) {
-      case RolesType.admin:
-        return RolesType.admin;
-      case RolesType.client:
-        return Roles.CLIENT;
-    }
-  }
-
   public toString() {
     const preFormatt = {
       username: this._accoount.username,
       password: this._accoount.password,
-      userrole: JSON.stringify(this._accoount.userrole),
       company: this._accoount.company.toString(),
     };
     return JSON.stringify(preFormatt);
