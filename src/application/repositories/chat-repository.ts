@@ -65,9 +65,7 @@ export abstract class ChatRepository {
     aId: string,
     bId: string,
   ): Promise<IConversationResponse>;
-  abstract createMessage(
-    req: ICreateMessageRequest,
-  ): Promise<IMessageResponse>;
+  abstract createMessage(req: ICreateMessageRequest): Promise<IMessageResponse>;
   abstract getMessagesBetween(
     accountId: string,
     otherId: string,
@@ -75,11 +73,11 @@ export abstract class ChatRepository {
   abstract createScheduledMessage(
     req: ICreateScheduledMessageRequest,
   ): Promise<{ id: string }>;
-  abstract deleteScheduledMessage(
-    scheduledId: string,
-  ): Promise<void>;
+  abstract deleteScheduledMessage(scheduledId: string): Promise<void>;
   abstract createQuickMessage(
     req: ICreateQuickMessageRequest,
   ): Promise<IQuickMessageResponse>;
-  abstract getQuickMessages(accountId: string): Promise<IQuickMessageResponse[]>;
+  abstract getQuickMessages(
+    accountId: string,
+  ): Promise<IQuickMessageResponse[]>;
 }

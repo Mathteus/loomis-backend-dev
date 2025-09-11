@@ -1,9 +1,11 @@
+import { IdentifiersGeneratorService } from '@/common/identifiers/identifier-generator';
+import { NanoidGeneratorService } from '@/common/identifiers/nanoid-generator.service';
 import { Replace } from '@/utility';
-import { randomUUID } from 'node:crypto';
 
 export interface IContact {
   contactId: string;
   username: string;
+  avatar: string;
   collaboratorId: string;
   phone: string;
   email: string;
@@ -18,7 +20,8 @@ export interface IContact {
 }
 
 export class ContactEntity {
-  _self: IContact;
+  private _self: IContact;
+  private _identifiers: IdentifiersGeneratorService;
 
   constructor(
     contact: Replace<
@@ -28,9 +31,11 @@ export class ContactEntity {
       }
     >,
   ) {
+    this._identifiers = new NanoidGeneratorService();
     this._self = {
-      contactId: randomUUID(),
+      contactId: contact.contactId ?? this._identifiers.generate('contacts'),
       username: contact.username,
+      avatar: contact.avatar,
       collaboratorId: contact.collaboratorId,
       phone: contact.phone,
       email: contact.email,
@@ -51,6 +56,10 @@ export class ContactEntity {
 
   get username() {
     return this._self.username;
+  }
+
+  get avatar() {
+    return this._self.avatar;
   }
 
   get collaboratorId() {

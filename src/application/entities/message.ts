@@ -1,8 +1,11 @@
+import { IdentifiersGeneratorService } from '@/common/identifiers/identifier-generator';
 import { CalculatorSizeService } from '@/common/size-calculator/calculator.service';
+import { Replace } from '@/utility';
 
 export type MessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE';
 
 export interface IMessage {
+  messageId: string;
   contentData: string | Blob;
   contentType: MessageType;
   senderId: string;
@@ -24,15 +27,31 @@ export class ErrorContentSize extends Error {
 
 export class MessageEntity {
   private _message: IMessage;
+  private _identifier: IdentifiersGeneratorService;
   private _TextContentLimit = CalculatorSizeService.getKB(1);
   private _ImageContentLimit = CalculatorSizeService.getMB(50);
   private _VideoContentLimit = CalculatorSizeService.getMB(100);
   private _AudioContentLimit = CalculatorSizeService.getMB(50);
 
-  constructor(message: IMessage) {
+  constructor(
+    message: Replace<
+      IMessage,
+      {
+        messageId?: string;
+      }
+    >,
+  ) {
     this.verifyContentType(message.contentType);
     this.verifyContentSize(message.contentType, message.contentData);
-    this._message = message;
+
+    this._message = {
+      messageId: message.messageId ?? this._identifier.generate('messages'),
+      contentData: message.contentData,
+      contentType: message.contentType,
+      senderId: message.senderId,
+      receiverId: message.receiverId,
+      timestamp: message.timestamp ?? new Date(),
+    };
   }
 
   private verifyContentSize(
