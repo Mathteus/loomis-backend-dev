@@ -1,3 +1,3 @@
 export abstract class CodeGeneratorService {
-  abstract generateCode(): string;
+  abstract generateCode(): Promise<string>;
 }
