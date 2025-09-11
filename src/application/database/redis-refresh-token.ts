@@ -1,46 +1,18 @@
-// import { Inject, Injectable } from '@nestjs/common';
-// import { RefreshTokensRepository } from '../repositories/refreshs-tokens.repository';
-// import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
-
-// @Injectable()
-// export class RedisRefreshTokens implements RefreshTokensRepository {
-//   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
-
-//   async regiterToken(hash: string, refreshToken: string): Promise<void> {
-//     const cachedUser = await this.cacheManager.get(`refreshsTokens`);
-//     if (cachedUser) {
-//       throw new RedisRefreshTokensNotExists();
-//     }
-//     const mapRefreshsTokens = new Map<string, string>(
-//       JSON.parse(cachedUser) as Map<string, string>,
-//     );
-//   }
-//   getTokenByHash(hash: string): Promise<string> {
-//     throw new Error('Method not implemented.');
-//   }
-//   removeTokenByHash(hash: string): Promise<void> {
-//     throw new Error('Method not implemented.');
-//   }
-// }
-
 export class RedisRefreshTokensNotExists extends Error {
   constructor() {
     super('There is no refresh token in redis!');
   }
 }
 
-import { Injectable, Inject } from '@nestjs/common';
-import Redis from 'ioredis';
+import { Injectable } from '@nestjs/common';
+import { RedisService } from './config/redis.service';
 import { RefreshTokensRepository } from '../repositories/refreshs-tokens.repository';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 const REFRESH_TOKENS_KEY = 'refresh_tokens';
 
 @Injectable()
-export class RedisRefreshTokensService extends RefreshTokensRepository {
-  constructor(@Inject(CACHE_MANAGER) private readonly redis: Redis) {
-    super();
-  }
+export class RedisRefreshTokensService implements RefreshTokensRepository {
+  constructor(private readonly redis: RedisService) {}
 
   async regiterToken(hash: string, accountId: string): Promise<void> {
     await this.redis.hset(REFRESH_TOKENS_KEY, hash, accountId);
