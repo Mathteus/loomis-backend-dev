@@ -2,10 +2,12 @@ import { Injectable } from '@nestjs/common';
 
 export interface ItemPipeRecord {
   itemid: string;
+  title: string;
   contactId: string;
   collaboratorId: string;
   amount: number;
   tags: string[];
+  accountId: string;
   pipelineId: string;
 }
 
@@ -22,5 +24,5 @@ export abstract class ItemPipeRepository {
     data: Partial<Omit<ItemPipeRecord, 'itemid' | 'pipelineId'>>,
   ): Promise<ItemPipeRecord>;
   abstract delete(itemId: string): Promise<void>;
+  abstract deleteByPipeline(pipelineId: string): Promise<void>;
 }
-

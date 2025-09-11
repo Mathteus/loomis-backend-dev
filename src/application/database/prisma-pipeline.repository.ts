@@ -1,12 +1,17 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from './config/prisma.service';
-import { PipelineRepository, PipelineRecord } from '@/application/repositories/pipeline.repository';
+import {
+  PipelineRepository,
+  PipelineRecord,
+  CreatePipelineProps,
+  UpdatePipelineProps,
+} from '@/application/repositories/pipeline.repository';
 
 @Injectable()
 export class PrismaPipelineRepository implements PipelineRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listByFunnel(funnelId: string): Promise<PipelineRecord[]> {
+  async getByFunnel(funnelId: string): Promise<PipelineRecord[]> {
     const rows = await this.prisma.pipeline.findMany({
       where: { funnelId },
       orderBy: { title: 'asc' },
@@ -20,13 +25,15 @@ export class PrismaPipelineRepository implements PipelineRepository {
     }));
   }
 
-  async create(
-    funnelId: string,
-    title: string,
-    headColor: string,
-  ): Promise<PipelineRecord> {
+  async create(pipeline: CreatePipelineProps): Promise<PipelineRecord> {
+    const { funnelId, title, headColor, isDefaut } = pipeline;
     const row = await this.prisma.pipeline.create({
-      data: { funnelId, title, headColor },
+      data: {
+        funnelId,
+        title,
+        headColor,
+        isDefaut: isDefaut ?? false,
+      },
     });
     return {
       pipeid: row.pipeid,
@@ -38,7 +45,9 @@ export class PrismaPipelineRepository implements PipelineRepository {
   }
 
   async getById(pipelineId: string): Promise<PipelineRecord | null> {
-    const row = await this.prisma.pipeline.findUnique({ where: { pipeid: pipelineId } });
+    const row = await this.prisma.pipeline.findUnique({
+      where: { pipeid: pipelineId },
+    });
     if (!row) return null;
     return {
       pipeid: row.pipeid,
@@ -49,19 +58,25 @@ export class PrismaPipelineRepository implements PipelineRepository {
     };
   }
 
-  async update(
-    pipelineId: string,
-    data: Partial<Pick<PipelineRecord, 'title' | 'headColor'>>,
-  ): Promise<PipelineRecord> {
-    const current = await this.prisma.pipeline.findUnique({ where: { pipeid: pipelineId } });
-    if (!current) throw new BadRequestException('Pipeline not found');
-    if (current.isDefaut && data.title) {
+  async update(pipeline: UpdatePipelineProps): Promise<PipelineRecord> {
+    const { pipelineId: pipeid, dataUpdate } = pipeline;
+    const current = await this.prisma.pipeline.findUnique({
+      where: { pipeid },
+    });
+
+    if (!current) {
+      throw new BadRequestException('Pipeline not found');
+    }
+
+    if (current.isDefaut) {
       throw new BadRequestException('Pipe padrão não pode ser alterado');
     }
+
     const row = await this.prisma.pipeline.update({
-      where: { pipeid: pipelineId },
-      data: { ...data },
+      where: { pipeid },
+      data: { ...dataUpdate },
     });
+
     return {
       pipeid: row.pipeid,
       title: row.title,
@@ -75,4 +90,3 @@ export class PrismaPipelineRepository implements PipelineRepository {
     await this.prisma.pipeline.delete({ where: { pipeid: pipelineId } });
   }
 }
-
