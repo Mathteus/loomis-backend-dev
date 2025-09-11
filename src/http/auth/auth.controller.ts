@@ -154,18 +154,4 @@ export class AuthController {
   ) {
     return this.authService.resetPassword(userId, body.newPassword);
   }
-
-  // @Patch('me/email')
-  // async startEmailChange(@Req() req, @Body() dto: { newEmail: string }) {
-  //   // await this.users.startEmailChange({ userId: req.user.id, newEmail: dto.ne
-  //   // return { message: 'Te enviamos um link para confirmar o novo e-mail.' };
-  // }
-
-  // @Get('verify-email')
-  // async verifyEmail(@Query('token') token: string) {
-  //   // const { userId, newEmail } = await this.users.finishEmailChange(token);
-  //   // // Propaga pro gateway também
-  //   // await this.gateways.updateCustomerEmail({ userId, newEmail });
-  //   // return { message: 'E-mail atualizado com sucesso.' };
-  // }
 }

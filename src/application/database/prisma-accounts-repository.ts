@@ -16,6 +16,7 @@ export class PrismaAccountsRepository implements AccountsRepository {
   async registerAccount(newUser: AccountEntity): Promise<void> {
     const response = await this.prisma.company.create({
       data: {
+        companyid: newUser.company.companyId,
         companyname: newUser.company.companyName,
         companycnpj: newUser.company.companyCNPJ,
         companycustomers: newUser.company.getCustomesString(),
@@ -26,10 +27,11 @@ export class PrismaAccountsRepository implements AccountsRepository {
 
     await this.prisma.accounts.create({
       data: {
+        acountid: newUser.accountId,
         username: newUser.username,
         email: newUser.email,
         password: newUser.password,
-        role: newUser.getRoleString() as AccountRoles,
+        role: AccountRoles.CLIENT,
         companyCompanyid: response.companyid,
       },
     });
@@ -50,6 +52,7 @@ export class PrismaAccountsRepository implements AccountsRepository {
       acountid: String(response?.acountid),
       hash: String(response?.password),
       username: String(response?.username),
+      role: String(response?.role),
     };
   }
 
@@ -68,11 +71,11 @@ export class PrismaAccountsRepository implements AccountsRepository {
       acountid: String(response?.acountid),
       hash: String(response?.password),
       username: String(response?.username),
+      role: String(response?.role),
     };
   }
 
   async getAllAccounts(): Promise<Array<IAccount>> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
     return await this.prisma.accounts.findMany();
   }
 

@@ -1,14 +1,13 @@
 import {
-  CanActivate,
   ExecutionContext,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
 import { IS_PROTECTED_KEY } from '@/decorators/protected.decorator';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { Request } from 'express';
 import { JwtStrategy } from './jwt.strategy';
 import { IS_RESET_TICKET } from '@/decorators/reset-ticket.decorator';
 import { IS_RECOVERY_TICKET } from '@/decorators/recovery-ticket.decorator';
@@ -55,11 +54,9 @@ export class AuthGuard extends JwtStrategy {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const request = context.switchToHttp().getRequest();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    // Explicitly type request as Request to avoid unsafe member access
+    const request: Request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const tokenXApiKey = this.extractXApiKeyFromHeader(request);
     const isProtected = this.reflector.getAllAndOverride<boolean>(
       IS_PROTECTED_KEY,
@@ -95,8 +92,7 @@ export class AuthGuard extends JwtStrategy {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      request['user'] = await this.jwt.verifyAsync(token, {
+      request['user'] = await this.jwt.verifyAsync<JwtPayload>(token, {
         secret: this.jwtSecret,
         ignoreExpiration: false,
       });
@@ -108,8 +104,12 @@ export class AuthGuard extends JwtStrategy {
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+    const authHeader = request.headers['authorization'];
+    if (typeof authHeader === 'string') {
+      const [type, token] = authHeader.split(' ');
+      return type === 'Bearer' ? token : undefined;
+    }
+    return undefined;
   }
 
   private extractXApiKeyFromHeader(request: Request): boolean {

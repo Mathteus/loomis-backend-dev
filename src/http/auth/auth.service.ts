@@ -12,22 +12,24 @@ import {
   AccountSingUpDto,
 } from '@/application/dto/user';
 import { AccountsRepository } from '@/application/repositories/accounts-repository';
-import { AccountEntity, RolesType } from '@/application/entities/account';
+import { AccountEntity } from '@/application/entities/account';
 import { CompanyEntity } from '@/application/entities/company';
 import {
   AuthRecoveryCodeWrong,
   AuthUserAlreadyRegistered,
   AuthUserNotExists,
 } from './auth.errors';
-import { CodeGeneratorService } from '@/common/code-generator/code-generator.service';
+import { CodeGeneratorService } from '@/common/code-generator/code-generator';
 import { JwtEntity } from '@/application/entities/jwt';
 import { JwtOwnService } from '@/common/jwt/jwt.service';
-import { HashGenerator } from '@/common/hash/hash-generator.service';
+import { HashGeneratorService } from '@/common/hash/hash-generator.service';
 import { randomString } from '@/utility';
 import { IntentAccountRepository } from '@/application/repositories/intent-account.repository';
 import { EmailService } from '@/application/email/email.service';
 import { RefreshTokensRepository } from '@/application/repositories/refreshs-tokens.repository';
-import { PasswordHasherService } from '@/common/password-hasher/password-hasher.service';
+import { PasswordHasherService } from '@/common/password-hasher/password-hasher';
+import { FunnelRepository } from '@/application/repositories/funnel.repository';
+import { PipelineRepository } from '@/application/repositories/pipeline.repository';
 
 @Injectable()
 export class AuthService {
@@ -38,28 +40,32 @@ export class AuthService {
     private readonly code: CodeGeneratorService,
     private readonly email: EmailService,
     private readonly refreshTokensCache: RefreshTokensRepository,
-    private readonly hasher: HashGenerator,
+    private readonly hasher: HashGeneratorService,
     private readonly IntentAccountDB: IntentAccountRepository,
+    private readonly funnelsRepository: FunnelRepository,
+    private readonly pipelinesRepository: PipelineRepository,
   ) {}
 
-  public async registerIntent(accountIntent: AccountIntent) {
-    await this.IntentAccountDB.create(accountIntent);
-  }
-
-  public async confirmIntent(accountIntent: AccountIntent) {
-    try {
-      await this.IntentAccountDB.payPlan(accountIntent);
-      const rawPass = this.hasher.createSHA256(
-        randomString(30) + new Date().toISOString(),
-      );
-      const hashedPassword = await this.brcypt.toHash(rawPass);
-      await this.email.sendEmailFirtLogin({
-        to: accountIntent.email,
-        password: rawPass,
-      });
-    } catch (err) {
-      throw new InternalServerErrorException();
-    }
+  private async createBaseFunnle(accountId: string) {
+    const funnel = await this.funnelsRepository.create({
+      title: 'Funil Padrão',
+      accountId,
+    });
+    await this.pipelinesRepository.create({
+      funnelId: funnel.funnelid,
+      title: 'Abordagem',
+      headColor: '#111B21',
+    });
+    await this.pipelinesRepository.create({
+      funnelId: funnel.funnelid,
+      title: 'Ganho',
+      headColor: '#399B61',
+    });
+    await this.pipelinesRepository.create({
+      funnelId: funnel.funnelid,
+      title: 'Perda',
+      headColor: '#D46026',
+    });
   }
 
   public async signup(user: AccountSingUpDto) {
@@ -69,7 +75,6 @@ export class AuthService {
         username: user.username,
         email: user.email,
         password: hashedPassword,
-        userrole: RolesType.client,
         company: new CompanyEntity({
           companyCNPJ: user.companyCNPJ,
           companyCustomes: user.companyCustomers,
@@ -79,6 +84,7 @@ export class AuthService {
         }),
       });
       await this.database.registerAccount(userToRegister);
+      await this.createBaseFunnle(userToRegister.accountId);
     } catch (excepetion) {
       if (excepetion instanceof AuthUserAlreadyRegistered) {
         throw new ConflictException(excepetion.message);
@@ -107,7 +113,7 @@ export class AuthService {
       const hash = this.hasher.createSHA256();
       await this.refreshTokensCache.regiterToken(hash, userFound.acountid);
 
-      const accesstoken = await this.ownJwt.sign({
+      const accessToken = await this.ownJwt.sign({
         customTime: '4h',
         payload: new JwtEntity({
           body: {
@@ -117,6 +123,7 @@ export class AuthService {
           type: 'ACCESS',
         }),
       });
+
       const refreshToken = await this.ownJwt.sign({
         customTime: '6h',
         payload: new JwtEntity({
@@ -126,7 +133,7 @@ export class AuthService {
       });
 
       return {
-        accesstoken,
+        accessToken,
         refreshToken,
       };
     } catch (excepetion) {
@@ -230,7 +237,7 @@ export class AuthService {
 
   public async verifyCodeRecovery(code: string, email: string) {
     try {
-      if (code !== this.code.generateCode()) {
+      if (code !== (await this.code.generateCode())) {
         throw new AuthRecoveryCodeWrong();
       }
       const userFound = await this.database.searchAccountByEmail(email);
