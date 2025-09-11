@@ -8,6 +8,14 @@ export interface IJwtBody {
   customTime: string;
 }
 
+export interface IJwtPayload {
+  sub: string;
+  type: string;
+  iat: number;
+  exp: number;
+  body?: unknown;
+}
+
 @Injectable()
 export class JwtOwnService {
   private JWT_TOKEN: string;
