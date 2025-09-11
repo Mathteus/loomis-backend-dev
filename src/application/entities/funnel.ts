@@ -1,5 +1,6 @@
+import { IdentifiersGeneratorService } from '@/common/identifiers/identifier-generator';
+import { NanoidGeneratorService } from '@/common/identifiers/nanoid-generator.service';
 import { Replace } from '@/utility';
-import { randomUUID } from 'node:crypto';
 
 export interface IFunnelEntity {
   funnelid: string;
@@ -8,7 +9,8 @@ export interface IFunnelEntity {
 }
 
 export class FunnelEntity {
-  _self: IFunnelEntity;
+  private _self: IFunnelEntity;
+  private _indefier: IdentifiersGeneratorService;
 
   constructor(
     funnel: Replace<
@@ -19,10 +21,37 @@ export class FunnelEntity {
       }
     >,
   ) {
+    this._indefier = new NanoidGeneratorService();
     this._self = {
-      funnelid: funnel.funnelid ?? randomUUID(),
+      funnelid: funnel.funnelid ?? this._indefier.generate('funnels'),
       pipelines: funnel.pipelines ?? [],
       funnilname: funnel.funnilname,
     };
+  }
+
+  public get funnelId(): string {
+    return this._self.funnelid;
+  }
+
+  public get funnelName(): string {
+    return this._self.funnilname;
+  }
+
+  public set funnelName(funnelName: string) {
+    this._self.funnilname = funnelName;
+  }
+
+  public get pipelines(): string[] {
+    return this._self.pipelines;
+  }
+
+  public addPipelines(pipelineId: string) {
+    this._self.pipelines.push(pipelineId);
+  }
+
+  public removePipelines(pipelineId: string) {
+    this._self.pipelines = this._self.pipelines.filter(
+      (pipeId) => pipeId !== pipelineId,
+    );
   }
 }

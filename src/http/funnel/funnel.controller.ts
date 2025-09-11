@@ -8,25 +8,25 @@ import {
   Param,
   Post,
   Put,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import { FunnelService } from './funnel.service';
 import { AuthGuard } from '@/http/auth/auth.guard';
+import { Access } from '@/decorators/access.decorator';
+import { CurrentUser } from '@/decorators/curent-user.decorator';
 import {
-  PipelineFunnelDto,
+  GetFunnelDto,
   createFunnelDto,
   updateFunnelDto,
   deleteFunnelDto,
-  getPipelinesDto,
   createPipelineDto,
   updatePipelineDto,
   deletePipelineDto,
-  getItemsPipeDto,
   createItemPipeDto,
   updateItemPipeDto,
   deleteItemPipeDto,
 } from '@/application/dto/funnel';
+import { IJwtPayload } from '@/common/jwt/jwt.service';
 
 @Controller('funnels')
 export class FunnelController {
@@ -34,83 +34,95 @@ export class FunnelController {
 
   // Funnels
   @UseGuards(AuthGuard)
+  @Access('funnel', 'READ')
   @Get()
   @HttpCode(HttpStatus.OK)
-  async getFunnels(@Query() query: PipelineFunnelDto) {
-    return this.service.getFunnels(query);
+  async getFunnels(@CurrentUser() user: IJwtPayload) {
+    const accountId = user?.sub;
+    const query: GetFunnelDto = { accountId };
+    return this.service.getFunnelsByAccount(query);
   }
 
   @UseGuards(AuthGuard)
+  @Access('funnel', 'CREATE')
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createFunnel(@Body() body: createFunnelDto) {
-    return await this.service.createFunnel(body);
+  async createFunnel(
+    @CurrentUser() user: IJwtPayload,
+    @Body() body: createFunnelDto,
+  ) {
+    const accountId = user?.sub;
+    const payload: createFunnelDto = { ...body, accountId };
+    return await this.service.createFunnelByAccount(payload);
   }
 
+  // Board data: pipelines + opportunities
   @UseGuards(AuthGuard)
-  @Get(':funnelid')
+  @Access('funnel', 'READ')
+  @Get(':funnelid/board')
   @HttpCode(HttpStatus.OK)
-  async getFunnelById(@Param('funnelid') funnelId: string) {
-    return await this.service.getFunnelById(funnelId);
+  async getBoard(@Param('funnelid') funnelId: string) {
+    return await this.service.getAllFromFunnelId({ funnelId });
   }
 
   @UseGuards(AuthGuard)
+  @Access('funnel', 'UPDATE')
   @Put(':funnelid')
   @HttpCode(HttpStatus.OK)
   async updateFunnel(
     @Param('funnelid') funnelId: string,
     @Body() body: updateFunnelDto,
   ) {
-    return await this.service.updateFunnel(funnelId, body);
+    return await this.service.updatePipelesByFunnelId({ ...body, funnelId });
   }
 
   @UseGuards(AuthGuard)
+  @Access('funnel', 'DELETE')
   @Delete(':funnelid')
   @HttpCode(HttpStatus.OK)
   async deleteFunnel(
     @Param('funnelid') funnelId: string,
     @Body() body: deleteFunnelDto,
   ) {
-    return await this.service.deleteFunnel(funnelId, body);
+    await this.service.deleteFunnel({ funnelId });
+    return { ok: true };
   }
 
   // Pipelines
   @UseGuards(AuthGuard)
+  @Access('pipeline', 'READ')
   @Get(':funnelid/pipelines')
   @HttpCode(HttpStatus.OK)
   async getPipelinesByFunnel(
     @Param('funnelid') funnelId: string,
-    @Query('userId') userId?: string,
+    @CurrentUser() user: IJwtPayload,
   ) {
-    const query: getPipelinesDto = { userId: userId ?? '', funnelId: funnelId };
-    return await this.service.getPipelinesByFunnel(query);
+    const accountId = user?.sub;
+    return await this.service.getPipelinesByFunnel({
+      accountId,
+      funnelId: funnelId,
+    });
   }
 
   @UseGuards(AuthGuard)
+  @Access('pipeline', 'CREATE')
   @Post(':funnelid/pipelines')
   @HttpCode(HttpStatus.CREATED)
   async createPipeline(
+    @CurrentUser() user: IJwtPayload,
     @Param('funnelid') funnelId: string,
     @Body() body: createPipelineDto,
   ) {
-    const payload: createPipelineDto = {
+    const accountId = user?.sub;
+    return await this.service.createPipeline({
       ...body,
+      accountId,
       funnelId,
-    };
-    return await this.service.createPipeline(payload);
+    });
   }
 
   @UseGuards(AuthGuard)
-  @Get(':funnelid/pipelines/:pipelineid')
-  @HttpCode(HttpStatus.OK)
-  async getPipelineById(
-    @Param('funnelid') funnelId: string,
-    @Param('pipelineid') pipelineId: string,
-  ) {
-    return await this.service.getPipelineById(funnelId, pipelineId);
-  }
-
-  @UseGuards(AuthGuard)
+  @Access('pipeline', 'UPDATE')
   @Put(':funnelid/pipelines/:pipelineid')
   @HttpCode(HttpStatus.OK)
   async updatePipeline(
@@ -118,106 +130,73 @@ export class FunnelController {
     @Param('pipelineid') pipelineId: string,
     @Body() body: updatePipelineDto,
   ) {
-    const payload: updatePipelineDto = {
+    return await this.service.updatePipeline({
       ...body,
       funnelId,
       pipelineId,
-    };
-    return await this.service.updatePipeline(payload);
+    });
   }
 
   @UseGuards(AuthGuard)
+  @Access('pipeline', 'DELETE')
   @Delete(':funnelid/pipelines/:pipelineid')
   @HttpCode(HttpStatus.OK)
   async deletePipeline(
+    @CurrentUser() user: IJwtPayload,
     @Param('funnelid') funnelId: string,
     @Param('pipelineid') pipelineId: string,
     @Body() body: deletePipelineDto,
   ) {
-    const payload: deletePipelineDto = {
-      ...body,
-      funnelId,
-      pipelineId,
-    };
-    return await this.service.deletePipeline(payload);
+    const accountId = user?.sub;
+    await this.service.deleteOpportunitiesByPipeline(pipelineId);
+    await this.service.deletePipeline(pipelineId);
+    return { ok: true };
   }
 
-  // Pipe items
+  // Opportunities
   @UseGuards(AuthGuard)
-  @Get(':funnelid/pipelines/:pipelineid/items')
+  @Access('pipeitem', 'READ')
+  @Get(':funnelid/pipelines/:pipelineid/opportunities')
   @HttpCode(HttpStatus.OK)
   async getItems(
     @Param('pipelineid') pipelineId: string,
-    @Query('userId') userId?: string,
-    @Param('funnelid') funnelId?: string,
+    @Param('funnelid') funnelId: string,
   ) {
-    const query: getItemsPipeDto = {
-      userId: userId ?? '',
-      funnelId: funnelId ?? '',
-      pipeId: pipelineId,
-    };
-    return await this.service.getItemsByPipeline(query);
+    return await this.service.getItemsByPipeline({
+      funnelId,
+      pipelineId,
+    });
   }
 
   @UseGuards(AuthGuard)
-  @Post(':funnelid/pipelines/:pipelineid/items')
+  @Access('pipeitem', 'CREATE')
+  @Post(':funnelid/pipelines/:pipelineid/opportunities')
   @HttpCode(HttpStatus.CREATED)
   async createItem(
+    @CurrentUser() user: IJwtPayload,
     @Param('pipelineid') pipelineId: string,
     @Param('funnelid') funnelId: string,
     @Body() body: createItemPipeDto,
   ) {
-    const payload: createItemPipeDto = {
+    const accountId = user?.sub;
+    return await this.service.createOpotunity({
       ...body,
-      pipeId: pipelineId,
+      accountId,
+      pipelineId,
       funnelId,
-    };
-    return await this.service.createItem(payload);
+    });
   }
 
+  // Delete all opportunities from a pipeline
   @UseGuards(AuthGuard)
-  @Get(':funnelid/pipelines/:pipelineid/items/:itemid')
+  @Access('pipeitem', 'DELETE')
+  @Delete(':funnelid/pipelines/:pipelineid/opportunities')
   @HttpCode(HttpStatus.OK)
-  async getItemById(
-    @Param('pipelineid') pipelineId: string,
-    @Param('itemid') itemId: string,
-  ) {
-    return await this.service.getItemById(pipelineId, itemId);
-  }
-
-  @UseGuards(AuthGuard)
-  @Put(':funnelid/pipelines/:pipelineid/items/:itemid')
-  @HttpCode(HttpStatus.OK)
-  async updateItem(
+  async deleteOpportunities(
     @Param('pipelineid') pipelineId: string,
     @Param('funnelid') funnelId: string,
-    @Param('itemid') itemId: string,
-    @Body() body: updateItemPipeDto,
   ) {
-    const payload: updateItemPipeDto = {
-      ...body,
-      pipeId: pipelineId,
-      funnelId,
-      itemId,
-    };
-    return await this.service.updateItem(payload);
-  }
-
-  @UseGuards(AuthGuard)
-  @Delete(':funnelid/pipelines/:pipelineid/items/:itemid')
-  @HttpCode(HttpStatus.OK)
-  async deleteItem(
-    @Param('pipelineid') pipelineId: string,
-    @Param('funnelid') funnelId: string,
-    @Param('itemid') itemId: string,
-    @Body() body: deleteItemPipeDto,
-  ) {
-    const payload: deleteItemPipeDto = {
-      ...body,
-      pipeId: pipelineId,
-      funnelId,
-      itemId,
-    };
-    return await this.service.deleteItem(payload);
+    await this.service.deleteOpportunitiesByPipeline(pipelineId);
+    return { ok: true };
   }
 }

@@ -8,15 +8,25 @@ import { PrismaItemPipeRepository } from '@/application/database/prisma-item-pip
 import { FunnelRepository } from '@/application/repositories/funnel.repository';
 import { PipelineRepository } from '@/application/repositories/pipeline.repository';
 import { ItemPipeRepository } from '@/application/repositories/item-pipe.repository';
+import { RedisRefreshTokensService } from '@/application/database/redis-refresh-token';
+import { RedisService } from '@/application/database/config/redis.service';
 
 @Module({
   providers: [
     PrismaService,
     FunnelService,
+    RedisService,
+    RedisRefreshTokensService,
     { provide: FunnelRepository, useClass: PrismaFunnelRepository },
     { provide: PipelineRepository, useClass: PrismaPipelineRepository },
     { provide: ItemPipeRepository, useClass: PrismaItemPipeRepository },
   ],
   controllers: [FunnelController],
+  exports: [
+    FunnelService,
+    FunnelRepository,
+    PipelineRepository,
+    ItemPipeRepository,
+  ],
 })
 export class FunnelModule {}

@@ -1,5 +1,6 @@
+import { IdentifiersGeneratorService } from '@/common/identifiers/identifier-generator';
+import { NanoidGeneratorService } from '@/common/identifiers/nanoid-generator.service';
 import { Replace } from '@/utility';
-import { randomUUID } from 'node:crypto';
 
 export interface IPipeEntity {
   pipeid: string;
@@ -16,7 +17,8 @@ export class PipeStandardInmutableError extends Error {
 }
 
 export class PipeEntity {
-  _self: IPipeEntity;
+  private _self: IPipeEntity;
+  private _identifiers: IdentifiersGeneratorService;
 
   constructor(
     pipe: Replace<
@@ -28,8 +30,9 @@ export class PipeEntity {
       }
     >,
   ) {
+    this._identifiers = new NanoidGeneratorService();
     this._self = {
-      pipeid: pipe.pipeid ?? randomUUID(),
+      pipeid: pipe.pipeid ?? this._identifiers.generate('pipelines'),
       title: pipe.title,
       items: pipe.items ?? [],
       isDefaut: pipe.isDefaut ?? false,

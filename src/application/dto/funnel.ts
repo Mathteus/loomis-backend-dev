@@ -1,3 +1,4 @@
+import { Optional } from '@nestjs/common';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -11,16 +12,22 @@ import {
 } from 'class-validator';
 
 // Funnels
-export class PipelineFunnelDto {
+export class GetFunnelDto {
   @IsUUID()
   @IsNotEmpty()
-  userId: string;
+  accountId: string;
+}
+
+export class GetFunnelByIdDto {
+  @IsUUID()
+  @IsNotEmpty()
+  funnelId: string;
 }
 
 export class createFunnelDto {
   @IsUUID()
   @IsNotEmpty()
-  userId: string;
+  accountId: string;
 
   @IsString()
   @IsNotEmpty()
@@ -30,42 +37,49 @@ export class createFunnelDto {
 export class updateFunnelDto {
   @IsUUID()
   @IsNotEmpty()
-  userId: string;
-
-  @IsUUID()
-  @IsNotEmpty()
   funnelId: string;
 
   @IsString()
   @IsNotEmpty()
   title: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty()
+  orderPipes: string[];
 }
 
 export class deleteFunnelDto {
   @IsUUID()
   @IsNotEmpty()
   funnelId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
 }
 
 // Pipelines
 export class getPipelinesDto {
   @IsUUID()
   @IsNotEmpty()
-  userId: string;
+  accountId: string;
 
   @IsUUID()
   @IsNotEmpty()
   funnelId: string;
 }
 
+export class GetPipelineByIdDto {
+  @IsUUID()
+  @IsNotEmpty()
+  funnelId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  pipelineId: string;
+}
+
 export class createPipelineDto {
   @IsUUID()
   @IsNotEmpty()
-  userId: string;
+  accountId: string;
 
   @IsUUID()
   @IsNotEmpty()
@@ -81,10 +95,6 @@ export class createPipelineDto {
 }
 
 export class updatePipelineDto {
-  @IsUUID()
-  @IsNotEmpty()
-  userId: string;
-
   @IsUUID()
   @IsNotEmpty()
   funnelId: string;
@@ -113,28 +123,38 @@ export class deletePipelineDto {
 
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  accountId: string;
 }
 
 // Pipe Items
 export class getItemsPipeDto {
   @IsUUID()
   @IsNotEmpty()
-  userId: string;
+  funnelId: string;
 
+  @IsUUID()
+  @IsNotEmpty()
+  pipelineId: string;
+}
+
+export class GetItemPipeByIdDto {
   @IsUUID()
   @IsNotEmpty()
   funnelId: string;
 
   @IsUUID()
   @IsNotEmpty()
-  pipeId: string;
+  pipelineId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  itemId: string;
 }
 
 export class createItemPipeDto {
   @IsUUID()
   @IsNotEmpty()
-  userId: string;
+  accountId: string;
 
   @IsUUID()
   @IsNotEmpty()
@@ -142,7 +162,11 @@ export class createItemPipeDto {
 
   @IsUUID()
   @IsNotEmpty()
-  pipeId: string;
+  pipelineId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  title: string;
 
   @IsUUID()
   @IsNotEmpty()
@@ -161,13 +185,13 @@ export class createItemPipeDto {
   @IsNotEmpty()
   @ArrayMinSize(1)
   @ArrayMaxSize(10)
-  strings: string[];
+  tags: string[];
 }
 
 export class updateItemPipeDto {
   @IsUUID()
   @IsNotEmpty()
-  userId: string;
+  accountId: string;
 
   @IsUUID()
   @IsNotEmpty()
@@ -175,11 +199,15 @@ export class updateItemPipeDto {
 
   @IsUUID()
   @IsNotEmpty()
-  pipeId: string;
+  pipelineId: string;
 
   @IsUUID()
   @IsNotEmpty()
   itemId: string;
+
+  @IsString()
+  @IsOptional()
+  title?: string;
 
   @IsUUID()
   @IsOptional()
@@ -194,13 +222,13 @@ export class updateItemPipeDto {
   @IsOptional()
   @ArrayMinSize(0)
   @ArrayMaxSize(10)
-  strings?: string[];
+  tags?: string[];
 }
 
 export class deleteItemPipeDto {
   @IsUUID()
   @IsNotEmpty()
-  userId: string;
+  accountId: string;
 
   @IsUUID()
   @IsNotEmpty()
@@ -208,9 +236,48 @@ export class deleteItemPipeDto {
 
   @IsUUID()
   @IsNotEmpty()
-  pipeId: string;
+  pipelineId: string;
 
   @IsUUID()
   @IsNotEmpty()
   itemId: string;
+}
+
+export class GetAllByFunnelIdDto {
+  @IsUUID()
+  @IsNotEmpty()
+  funnelId: string;
+}
+
+export class createOpportunityDto {
+  @IsUUID()
+  @IsNotEmpty()
+  accountId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  funnelId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  pipelineId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  contactId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  collaboratorId: string;
+
+  @IsCurrency()
+  @IsNotEmpty()
+  amount: number;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(10)
+  tags: string[];
 }

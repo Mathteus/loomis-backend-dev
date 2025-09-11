@@ -1,191 +1,155 @@
 import {
-  PipelineFunnelDto,
+  GetFunnelDto,
   createFunnelDto,
   updateFunnelDto,
-  deleteFunnelDto,
   getPipelinesDto,
   createPipelineDto,
   updatePipelineDto,
-  deletePipelineDto,
   getItemsPipeDto,
   createItemPipeDto,
   updateItemPipeDto,
-  deleteItemPipeDto,
+  GetAllByFunnelIdDto,
 } from '@/application/dto/funnel';
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PipelineRepository } from '@/application/repositories/pipeline.repository';
 import { FunnelRepository } from '@/application/repositories/funnel.repository';
-import { ItemPipeRepository } from '@/application/repositories/item-pipe.repository';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import Redis from 'ioredis';
+import {
+  ItemPipeRecord,
+  ItemPipeRepository,
+} from '@/application/repositories/item-pipe.repository';
 
 @Injectable()
 export class FunnelService {
   constructor(
-    private readonly funnelsRepo: FunnelRepository,
-    private readonly pipelinesRepo: PipelineRepository,
-    private readonly itemsRepo: ItemPipeRepository,
-    @Inject(CACHE_MANAGER) private readonly redis: Redis,
+    private readonly funnelsRepository: FunnelRepository,
+    private readonly pipelinesRepository: PipelineRepository,
+    private readonly itemsRepository: ItemPipeRepository,
   ) {}
 
-  // Funnels
-  public async getFunnels(query: PipelineFunnelDto) {
-    const cacheKey = `funnels:user:${query.userId}`;
-    const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached) as unknown;
-    const response = await this.funnelsRepo.listByUser(query.userId);
-    await this.redis.set(cacheKey, JSON.stringify(response));
-    return response;
+  public async createFunnelByAccount(payload: createFunnelDto) {
+    return await this.funnelsRepository.create({
+      title: payload.title,
+      accountId: payload.accountId,
+    });
   }
 
-  public async createFunnel(payload: createFunnelDto) {
-    const created = await this.funnelsRepo.create(
-      payload.userId,
-      payload.title,
+  public async getFunnelsByAccount(body: GetFunnelDto) {
+    return await this.funnelsRepository.getByUser(body.accountId);
+  }
+
+  public async getAllFromFunnelId(payload: GetAllByFunnelIdDto) {
+    const funnel = await this.funnelsRepository.getById({
+      funnelId: payload.funnelId,
+    });
+    if (!funnel) throw new NotFoundException('Funnel not found');
+
+    const pipelines = await this.pipelinesRepository.getByFunnel(
+      payload.funnelId,
     );
-    await this.redis.del(`funnels:user:${payload.userId}`);
-    return created;
-  }
-
-  public async getFunnelById(funnelId: string) {
-    const found = await this.funnelsRepo.getById(funnelId);
-    if (!found) throw new NotFoundException('Funnel not found');
-    return found;
-  }
-
-  public async updateFunnel(funnelId: string, payload: updateFunnelDto) {
-    const exists = await this.funnelsRepo.getById(funnelId);
-    if (!exists) throw new NotFoundException('Funnel not found');
-    const updated = await this.funnelsRepo.updateTitle(funnelId, payload.title);
-    await this.redis.del(`funnels:user:${payload.userId}`);
-    return updated;
-  }
-
-  public async deleteFunnel(funnelId: string, payload: deleteFunnelDto) {
-    const exists = await this.funnelsRepo.getById(funnelId);
-    if (!exists) throw new NotFoundException('Funnel not found');
-    await this.funnelsRepo.delete(funnelId);
-    await this.redis.del(`funnels:user:${payload.userId}`);
-    await this.redis.del(`pipelines:funnel:${funnelId}`);
-    return { deleted: true };
+    if (!pipelines) {
+      throw new NotFoundException('Pipeline not found');
+    }
+    // Return pipelines with their opportunities for board view
+    const result = [] as Array<{
+      pipeline: (typeof pipelines)[number];
+      opportunities: ItemPipeRecord[];
+    }>;
+    for (const pipe of pipelines) {
+      const opportunities = await this.itemsRepository.listByPipeline(
+        pipe.pipeid,
+      );
+      result.push({ pipeline: pipe, opportunities: opportunities ?? [] });
+    }
+    return result;
   }
 
   // Pipelines
-  public async getPipelinesByFunnel(query: getPipelinesDto) {
-    const funnel = await this.funnelsRepo.getById(query.funnelId);
+  public async getPipelinesByFunnel(payload: getPipelinesDto) {
+    const funnel = await this.funnelsRepository.getById({
+      funnelId: payload.funnelId,
+    });
     if (!funnel) throw new NotFoundException('Funnel not found');
-    const cacheKey = `pipelines:funnel:${query.funnelId}`;
-    const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached) as unknown;
-    const response = await this.pipelinesRepo.listByFunnel(query.funnelId);
-    await this.redis.set(cacheKey, JSON.stringify(response));
-    return response;
+    return await this.pipelinesRepository.getByFunnel(payload.funnelId);
   }
 
   public async createPipeline(payload: createPipelineDto) {
-    const funnel = await this.funnelsRepo.getById(payload.funnelId);
+    const funnel = await this.funnelsRepository.getById({
+      funnelId: payload.funnelId,
+    });
     if (!funnel) throw new NotFoundException('Funnel not found');
-    const created = await this.pipelinesRepo.create(
-      payload.funnelId,
-      payload.title,
-      payload.headColor,
-    );
-    await this.redis.del(`pipelines:funnel:${payload.funnelId}`);
-    return created;
-  }
 
-  public async getPipelineById(funnelId: string, pipelineId: string) {
-    const funnel = await this.funnelsRepo.getById(funnelId);
-    if (!funnel) throw new NotFoundException('Funnel not found');
-    const pipeline = await this.pipelinesRepo.getById(pipelineId);
-    if (!pipeline || pipeline.funnelId !== funnelId)
-      throw new NotFoundException('Pipeline not found in funnel');
-    return pipeline;
-  }
-
-  public async updatePipeline(payload: updatePipelineDto) {
-    const funnel = await this.funnelsRepo.getById(payload.funnelId);
-    if (!funnel) throw new NotFoundException('Funnel not found');
-    const pipeline = await this.pipelinesRepo.getById(payload.pipelineId);
-    if (!pipeline || pipeline.funnelId !== payload.funnelId)
-      throw new NotFoundException('Pipeline not found in funnel');
-    const updated = await this.pipelinesRepo.update(payload.pipelineId, {
+    return await this.pipelinesRepository.create({
+      funnelId: payload.funnelId,
       title: payload.title,
       headColor: payload.headColor,
     });
-    await this.redis.del(`pipelines:funnel:${payload.funnelId}`);
-    return updated;
   }
 
-  public async deletePipeline(payload: deletePipelineDto) {
-    const funnel = await this.funnelsRepo.getById(payload.funnelId);
+  public async updatePipeline(payload: updatePipelineDto) {
+    const { pipelineId, ...rest } = payload;
+    return await this.pipelinesRepository.update({
+      pipelineId,
+      dataUpdate: {
+        title: rest.title,
+        headColor: rest.headColor,
+      },
+    });
+  }
+
+  public async deletePipeline(pipelineId: string) {
+    await this.pipelinesRepository.delete(pipelineId);
+  }
+
+  // Opportunities
+  public async getItemsByPipeline(payload: getItemsPipeDto) {
+    const funnel = await this.funnelsRepository.getById({
+      funnelId: payload.funnelId,
+    });
     if (!funnel) throw new NotFoundException('Funnel not found');
-    const pipeline = await this.pipelinesRepo.getById(payload.pipelineId);
-    if (!pipeline || pipeline.funnelId !== payload.funnelId)
-      throw new NotFoundException('Pipeline not found in funnel');
-    await this.pipelinesRepo.delete(payload.pipelineId);
-    await this.redis.del(`pipelines:funnel:${payload.funnelId}`);
-    await this.redis.del(`items:pipeline:${payload.pipelineId}`);
-    return { deleted: true };
+    return await this.itemsRepository.listByPipeline(payload.pipelineId);
   }
 
-  // Pipe Items
-  public async getItemsByPipeline(query: getItemsPipeDto) {
-    const pipeline = await this.pipelinesRepo.getById(query.pipeId);
-    if (!pipeline) throw new NotFoundException('Pipeline not found');
-    const cacheKey = `items:pipeline:${query.pipeId}`;
-    const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached) as unknown;
-    const response = await this.itemsRepo.listByPipeline(query.pipeId);
-    await this.redis.set(cacheKey, JSON.stringify(response));
-    return response;
-  }
+  public async createOpotunity(payload: createItemPipeDto) {
+    const funnel = await this.funnelsRepository.getById({
+      funnelId: payload.funnelId,
+    });
+    if (!funnel) throw new NotFoundException('Funnel not found');
 
-  public async createItem(payload: createItemPipeDto) {
-    const pipeline = await this.pipelinesRepo.getById(payload.pipeId);
-    if (!pipeline) throw new NotFoundException('Pipeline not found');
-    const created = await this.itemsRepo.create(payload.pipeId, {
+    const pipeline = await this.pipelinesRepository.getById(payload.pipelineId);
+    if (!pipeline || pipeline.funnelId !== payload.funnelId) {
+      throw new NotFoundException('Pipeline not found');
+    }
+
+    return await this.itemsRepository.create(payload.pipelineId, {
+      title: payload.title,
       contactId: payload.contactId,
       collaboratorId: payload.collaboratorId,
       amount: payload.amount,
-      tags: payload.strings,
+      tags: payload.tags,
+      accountId: payload.accountId,
     });
-    await this.redis.del(`items:pipeline:${payload.pipeId}`);
-    return created;
   }
 
-  public async getItemById(pipelineId: string, itemId: string) {
-    const pipeline = await this.pipelinesRepo.getById(pipelineId);
-    if (!pipeline) throw new NotFoundException('Pipeline not found');
-    const item = await this.itemsRepo.getById(itemId);
-    if (!item || item.pipelineId !== pipelineId)
-      throw new NotFoundException('Item not found in pipeline');
-    return item;
+  public async deleteOpportunitiesByPipeline(pipelineId: string) {
+    await this.itemsRepository.deleteByPipeline(pipelineId);
   }
 
-  public async updateItem(payload: updateItemPipeDto) {
-    const pipeline = await this.pipelinesRepo.getById(payload.pipeId);
-    if (!pipeline) throw new NotFoundException('Pipeline not found');
-    const item = await this.itemsRepo.getById(payload.itemId);
-    if (!item || item.pipelineId !== payload.pipeId)
-      throw new NotFoundException('Item not found in pipeline');
-    const updated = await this.itemsRepo.update(payload.itemId, {
-      contactId: payload.contactId,
-      amount: payload.amount,
-      tags: payload.strings,
+  public async updatePipelesByFunnelId(payload: updateFunnelDto) {
+    const exists = await this.funnelsRepository.getById({
+      funnelId: payload.funnelId,
     });
-    await this.redis.del(`items:pipeline:${payload.pipeId}`);
+
+    if (!exists) throw new NotFoundException('Funnel not found');
+
+    const updated = await this.funnelsRepository.update({
+      funnelId: payload.funnelId,
+      title: payload.title,
+      orderPipes: payload.orderPipes,
+    });
     return updated;
   }
 
-  public async deleteItem(payload: deleteItemPipeDto) {
-    const pipeline = await this.pipelinesRepo.getById(payload.pipeId);
-    if (!pipeline) throw new NotFoundException('Pipeline not found');
-    const item = await this.itemsRepo.getById(payload.itemId);
-    if (!item || item.pipelineId !== payload.pipeId)
-      throw new NotFoundException('Item not found in pipeline');
-    await this.itemsRepo.delete(payload.itemId);
-    await this.redis.del(`items:pipeline:${payload.pipeId}`);
-    return { deleted: true };
+  public async deleteFunnel(payload: { funnelId: string }) {
+    await this.funnelsRepository.delete({ funnelId: payload.funnelId });
   }
 }
