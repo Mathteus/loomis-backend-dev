@@ -15,6 +15,14 @@ async function bootstrap() {
     .setDescription('Descrição dos enpoints')
     .setVersion('1.0')
     .build();
+  app.enableCors({
+    origin: [
+      `http://localhost:${process.env.PORT}`,
+      'loomis-dev-app.netlify.app',
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Allow sending cookies and authentication headers
+  });
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
   await app.listen(Number(process.env.PORT) || 5000);
