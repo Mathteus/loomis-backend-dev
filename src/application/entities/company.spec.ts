@@ -1,6 +1,6 @@
 import {
-  companyEmployeesEnum,
-  companyCustomesEnum,
+  CompanyEmployeesEnum,
+  CompanyCustomesEnum,
   companyTypeEnum,
   ICompany,
   CompanyEntity,
@@ -13,9 +13,9 @@ function MakeCompany(companyOptional: Partial<ICompany> = {}) {
     companyName: companyOptional?.companyName ?? 'Thux',
     companyCNPJ: companyOptional?.companyCNPJ ?? '84.172.252/0001-98',
     companyEmplooyes:
-      companyOptional?.companyEmplooyes ?? companyEmployeesEnum['21_50'],
+      companyOptional?.companyEmplooyes ?? CompanyEmployeesEnum['21_50'],
     companyCustomes:
-      companyOptional?.companyCustomes ?? companyCustomesEnum['51_100'],
+      companyOptional?.companyCustomes ?? CompanyCustomesEnum['51_100'],
     companyType: companyOptional?.companyType ?? companyTypeEnum.BUSINESS,
   };
 }

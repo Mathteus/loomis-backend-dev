@@ -2,9 +2,9 @@ import { IdentifiersGeneratorService } from '@/common/identifiers/identifier-gen
 import { NanoidGeneratorService } from '@/common/identifiers/nanoid-generator.service';
 import { Replace, validarCNPJ } from '@/utility';
 import {
-  CompanyCustomers,
-  CompanyEmployees,
-  CompanyType,
+  company_customers,
+  company_employees,
+  company_type,
 } from '@prisma/client';
 
 export class ErrorCompanyNameLength extends Error {
@@ -26,7 +26,7 @@ export enum companyTypeEnum {
   STARTUP = 'STARTUP',
 }
 
-export enum companyCustomesEnum {
+export enum CompanyCustomesEnum {
   '1_10' = '1_10',
   '11_20' = '11_20',
   '21_50' = '21_50',
@@ -34,7 +34,7 @@ export enum companyCustomesEnum {
   '100+' = '100+',
 }
 
-export enum companyEmployeesEnum {
+export enum CompanyEmployeesEnum {
   JUST_ME = 'JUST_ME',
   '1_10' = '1_10',
   '11_20' = '11_20',
@@ -47,8 +47,8 @@ export interface ICompany {
   companyId: string;
   companyName: string;
   companyCNPJ: string;
-  companyEmplooyes: companyEmployeesEnum;
-  companyCustomes: companyCustomesEnum;
+  companyEmplooyes: CompanyEmployeesEnum;
+  companyCustomes: CompanyCustomesEnum;
   companyType: companyTypeEnum;
 }
 
@@ -101,11 +101,11 @@ export class CompanyEntity {
     return this._company.companyType;
   }
 
-  public get companyCustomes(): companyCustomesEnum {
+  public get companyCustomes(): CompanyCustomesEnum {
     return this._company.companyCustomes;
   }
 
-  public get companyEmplooyes(): companyEmployeesEnum {
+  public get companyEmplooyes(): CompanyEmployeesEnum {
     return this._company.companyEmplooyes;
   }
 
@@ -113,48 +113,48 @@ export class CompanyEntity {
     return this._company.companyCNPJ;
   }
 
-  public getCustomesString(): CompanyCustomers {
+  public getCustomesPrima(): company_customers {
     switch (this.companyCustomes) {
-      case companyCustomesEnum['1_10']:
-        return 'C1_10';
-      case companyCustomesEnum['11_20']:
-        return 'C11_20';
-      case companyCustomesEnum['21_50']:
-        return 'C21_50';
-      case companyCustomesEnum['51_100']:
-        return 'C51_100';
-      case companyCustomesEnum['100+']:
-        return 'C100P';
+      case CompanyCustomesEnum['1_10']:
+        return company_customers.C1_10;
+      case CompanyCustomesEnum['11_20']:
+        return company_customers.C11_20;
+      case CompanyCustomesEnum['21_50']:
+        return company_customers.C21_50;
+      case CompanyCustomesEnum['51_100']:
+        return company_customers.C51_100;
+      case CompanyCustomesEnum['100+']:
+        return company_customers.C100P;
     }
   }
 
-  public getEmployeesString(): CompanyEmployees {
+  public getEmployeesPrisma(): company_employees {
     switch (this.companyEmplooyes) {
-      case companyEmployeesEnum.JUST_ME:
-        return 'JUST_ME';
-      case companyEmployeesEnum['1_10']:
-        return 'C1_10';
-      case companyEmployeesEnum['11_20']:
-        return 'C11_20';
-      case companyEmployeesEnum['21_50']:
-        return 'C21_50';
-      case companyEmployeesEnum['51_100']:
-        return 'C51_100';
-      case companyEmployeesEnum['100+']:
-        return 'C100P';
+      case CompanyEmployeesEnum.JUST_ME:
+        return company_employees.JUST_ME;
+      case CompanyEmployeesEnum['1_10']:
+        return company_employees.E1_10;
+      case CompanyEmployeesEnum['11_20']:
+        return company_employees.E11_20;
+      case CompanyEmployeesEnum['21_50']:
+        return company_employees.E21_50;
+      case CompanyEmployeesEnum['51_100']:
+        return company_employees.E51_100;
+      case CompanyEmployeesEnum['100+']:
+        return company_employees.E100P;
     }
   }
 
-  public getTypeString(): CompanyType {
+  public getTypePrisma(): company_type {
     switch (this._company.companyType) {
       case companyTypeEnum.BUSINESS:
-        return 'BUSINESS';
+        return company_type.BUSINESS;
       case companyTypeEnum.DIGITAL_MARKETING_AGENCY:
-        return 'DIGITAL_MARKETING_AGENCY';
+        return company_type.DIGITAL_MARKETING_AGENCY;
       case companyTypeEnum.SERVICE_COMPANY:
-        return 'SERVICE_COMPANY';
+        return company_type.SERVICE_COMPANY;
       case companyTypeEnum.STARTUP:
-        return 'STARTUP';
+        return company_type.STARTUP;
     }
   }
 }
