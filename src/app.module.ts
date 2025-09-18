@@ -22,6 +22,7 @@ import { RedisRefreshTokensService } from './application/database/redis-refresh-
 import { EnviromentService } from './application/env/env.service';
 import { ContactService } from './http/contact/contact.service';
 import { ContactModule } from './http/contact/contact.module';
+import { CheckModule } from './http/check/check.module';
 
 @Module({
   imports: [
@@ -50,10 +51,11 @@ import { ContactModule } from './http/contact/contact.module';
         }),
       }),
     }),
-    AuthModule,
-    PassportModule,
     // ChatModule,
     // FunnelModule,
+    AuthModule,
+    PassportModule,
+    CheckModule,
     ContactModule,
   ],
   providers: [
