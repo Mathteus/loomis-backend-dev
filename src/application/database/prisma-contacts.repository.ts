@@ -297,7 +297,6 @@ export class PrismaContactsRepository implements ContactsRepository {
 
   async deleteContact(contact: IContactDelete) {
     await this.verifyContactNotExists(contact.contactId);
-
     await this.prisma.$transaction([
       this.prisma.tasks.deleteMany({ where: { clientid: contact.contactId } }),
       this.prisma.tasks.deleteMany({
@@ -314,11 +313,6 @@ export class PrismaContactsRepository implements ContactsRepository {
       }),
       this.prisma.contacts.delete({ where: { contactid: contact.contactId } }),
     ]);
-
-    return this.getContactsByAccount({
-      accountId: contact.accountId,
-      page: contact.page,
-    });
   }
 
   async deleteByAccount(contact: IContactDelete) {
@@ -341,8 +335,6 @@ export class PrismaContactsRepository implements ContactsRepository {
         where: { contactid: contact.contactId, accountid: contact.accountId },
       }),
     ]);
-
-    return [];
   }
 
   private createFilterPrisma(filters: IContactFilter) {

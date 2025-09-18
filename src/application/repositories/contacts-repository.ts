@@ -22,7 +22,6 @@ export interface IContactUpdate {
 export interface IContactDelete {
   contactId: string;
   accountId: string;
-  page: number;
 }
 
 export interface IContactFilter {
@@ -48,8 +47,8 @@ export abstract class ContactsRepository {
   ): Promise<ContactEntity[]>;
   abstract getContactById(contact: IContactsRequest): Promise<ContactEntity>;
   abstract updateContact(contact: IContactUpdate): Promise<ContactEntity[]>;
-  abstract deleteContact(contact: IContactDelete): Promise<ContactEntity[]>;
-  abstract deleteByAccount(contact: IContactDelete): Promise<ContactEntity[]>;
+  abstract deleteContact(contact: IContactDelete): Promise<void>;
+  abstract deleteByAccount(contact: IContactDelete): Promise<void>;
   abstract getContactEmplooyes(): Promise<ContactEntity[]>;
   abstract getContactsByFilter(
     filters: IContactFilter,

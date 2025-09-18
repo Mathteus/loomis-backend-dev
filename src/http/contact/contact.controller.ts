@@ -89,14 +89,12 @@ export class ContactController {
   async deleteContact(
     @CurrentUser() user: IJwtPayload,
     @Param('contactId') contactId: string,
-    @Query('page') page: number,
     @Body() body?: DeleteContact,
   ) {
     return await this.contactService.deleteContact({
       contactId,
       accountId: body?.accountId,
       jwtId: user.sub,
-      page,
     });
   }
 

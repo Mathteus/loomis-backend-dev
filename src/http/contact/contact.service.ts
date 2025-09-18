@@ -20,7 +20,6 @@ export interface IContactDeleteProps {
   accountId?: string;
   contactId: string;
   jwtId: string;
-  page: number;
 }
 
 export interface IContactUpdateProps {
@@ -150,20 +149,17 @@ export class ContactService {
   async deleteContact(contact: IContactDeleteProps) {
     try {
       if (contact?.accountId) {
-        return await this.contactsRepository.deleteByAccount({
+        await this.contactsRepository.deleteByAccount({
           contactId: contact.contactId,
           accountId: contact.accountId,
-          page: contact.page,
         });
+        return true;
       }
-      const employees = await this.contactsRepository.deleteContact({
+      await this.contactsRepository.deleteContact({
         contactId: contact.contactId,
         accountId: contact.jwtId,
-        page: contact.page,
       });
-      return employees.map((e) => {
-        return e.toFrontend();
-      });
+      return true;
     } catch (err) {
       if (err instanceof ContactNotFoundError) {
         throw new NotFoundException(err.message);
