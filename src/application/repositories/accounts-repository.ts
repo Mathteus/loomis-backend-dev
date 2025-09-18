@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AccountEntity } from '../entities/account';
+import { CompanyEntity } from '../entities/company';
 
 export interface IVerifyUserRequest {
   email: string;
@@ -21,12 +22,16 @@ export interface IAccount {
   companyCompanyid: string;
 }
 
+export interface IRegisterProps {
+  account: AccountEntity;
+  company: CompanyEntity;
+}
+
 @Injectable()
 export abstract class AccountsRepository {
-  abstract registerAccount(newUser: AccountEntity): Promise<void>;
+  abstract registerAccount(record: IRegisterProps): Promise<void>;
   abstract searchAccountByEmail(email: string): Promise<IVerifyUserReponse>;
   abstract searchAccountById(id: string): Promise<IVerifyUserReponse>;
-  abstract getAllAccounts(): Promise<Array<IAccount>>;
   abstract changePasswordFromAccount(
     accountId: string,
     newPassword: string,

@@ -1,7 +1,7 @@
-import { CompanyEntity } from './company';
 import { isEmailValido, Replace } from '@/utility';
 import { IdentifiersGeneratorService } from '@/common/identifiers/identifier-generator';
 import { NanoidGeneratorService } from '@/common/identifiers/nanoid-generator.service';
+import { roles_account } from '@prisma/client';
 
 export class ErrorUsernameMinLength extends Error {
   constructor() {
@@ -21,15 +21,17 @@ export class ErrorEmailInvalid extends Error {
   }
 }
 
+export type RoleAccount = 'admin' | 'member';
+
 export interface IAccount {
   accountId: string;
   username: string;
   password: string;
-  company: CompanyEntity;
   email: string;
   contactId: string[];
   lastPayment?: Date;
   createAt: Date;
+  role: RoleAccount;
 }
 
 export class AccountEntity {
@@ -44,6 +46,7 @@ export class AccountEntity {
         contactId?: string[];
         lastPayment?: Date;
         createAt?: Date;
+        role?: RoleAccount;
       }
     >,
   ) {
@@ -55,11 +58,11 @@ export class AccountEntity {
       accountId: account.accountId ?? this._idenfier.generate('accounts'),
       username: account.username,
       password: account.password,
-      company: account.company,
       email: account.email,
       contactId: account.contactId ?? [],
       lastPayment: account.lastPayment,
       createAt: account.createAt ?? new Date(),
+      role: account.role ?? 'member',
     };
   }
 
@@ -93,10 +96,6 @@ export class AccountEntity {
     return this._accoount.password;
   }
 
-  public get company(): CompanyEntity {
-    return this._accoount.company;
-  }
-
   public get contactId(): string[] {
     return this._accoount.contactId;
   }
@@ -113,12 +112,16 @@ export class AccountEntity {
     return this._accoount.email;
   }
 
-  public toString() {
-    const preFormatt = {
-      username: this._accoount.username,
-      password: this._accoount.password,
-      company: this._accoount.company.toString(),
-    };
-    return JSON.stringify(preFormatt);
+  public get role(): string {
+    return this._accoount.role;
+  }
+
+  public getRolePrisma(): roles_account {
+    switch (this._accoount.role) {
+      case 'member':
+        return roles_account.member;
+      case 'admin':
+        return roles_account.admin;
+    }
   }
 }

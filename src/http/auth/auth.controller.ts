@@ -4,7 +4,7 @@ import {
   AccountRefreshToken,
   AccountSignInDto,
   AccountSingUpDto,
-} from '@/application/dto/user';
+} from '@/application/dto/account';
 import {
   Controller,
   Post,

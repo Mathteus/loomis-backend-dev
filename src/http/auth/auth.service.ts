@@ -7,10 +7,9 @@ import {
 } from '@nestjs/common';
 import {
   AccountForgetPassword,
-  AccountIntent,
   AccountSignInDto,
   AccountSingUpDto,
-} from '@/application/dto/user';
+} from '@/application/dto/account';
 import { AccountsRepository } from '@/application/repositories/accounts-repository';
 import { AccountEntity } from '@/application/entities/account';
 import { CompanyEntity } from '@/application/entities/company';
@@ -23,13 +22,11 @@ import { CodeGeneratorService } from '@/common/code-generator/code-generator';
 import { JwtEntity } from '@/application/entities/jwt';
 import { JwtOwnService } from '@/common/jwt/jwt.service';
 import { HashGeneratorService } from '@/common/hash/hash-generator.service';
-import { randomString } from '@/utility';
-import { IntentAccountRepository } from '@/application/repositories/intent-account.repository';
 import { EmailService } from '@/application/email/email.service';
 import { RefreshTokensRepository } from '@/application/repositories/refreshs-tokens.repository';
 import { PasswordHasherService } from '@/common/password-hasher/password-hasher';
-import { FunnelRepository } from '@/application/repositories/funnel.repository';
-import { PipelineRepository } from '@/application/repositories/pipeline.repository';
+// import { FunnelRepository } from '@/application/repositories/funnel.repository';
+// import { PipelineRepository } from '@/application/repositories/pipeline.repository';
 
 @Injectable()
 export class AuthService {
@@ -41,50 +38,52 @@ export class AuthService {
     private readonly email: EmailService,
     private readonly refreshTokensCache: RefreshTokensRepository,
     private readonly hasher: HashGeneratorService,
-    private readonly IntentAccountDB: IntentAccountRepository,
-    private readonly funnelsRepository: FunnelRepository,
-    private readonly pipelinesRepository: PipelineRepository,
+    // private readonly funnelsRepository: FunnelRepository,
+    // private readonly pipelinesRepository: PipelineRepository,
   ) {}
 
-  private async createBaseFunnle(accountId: string) {
-    const funnel = await this.funnelsRepository.create({
-      title: 'Funil Padrão',
-      accountId,
-    });
-    await this.pipelinesRepository.create({
-      funnelId: funnel.funnelid,
-      title: 'Abordagem',
-      headColor: '#111B21',
-    });
-    await this.pipelinesRepository.create({
-      funnelId: funnel.funnelid,
-      title: 'Ganho',
-      headColor: '#399B61',
-    });
-    await this.pipelinesRepository.create({
-      funnelId: funnel.funnelid,
-      title: 'Perda',
-      headColor: '#D46026',
-    });
-  }
+  // private async createBaseFunnel(accountId: string) {
+  //   const funnel = await this.funnelsRepository.create({
+  //     title: 'Funil Padrão',
+  //     accountId,
+  //   });
+  //   await this.pipelinesRepository.create({
+  //     funnelId: funnel.funnelid,
+  //     title: 'Abordagem',
+  //     headColor: '#111B21',
+  //   });
+  //   await this.pipelinesRepository.create({
+  //     funnelId: funnel.funnelid,
+  //     title: 'Ganho',
+  //     headColor: '#399B61',
+  //   });
+  //   await this.pipelinesRepository.create({
+  //     funnelId: funnel.funnelid,
+  //     title: 'Perda',
+  //     headColor: '#D46026',
+  //   });
+  // }
 
   public async signup(user: AccountSingUpDto) {
     try {
       const hashedPassword = await this.brcypt.toHash(user.password);
-      const userToRegister: AccountEntity = new AccountEntity({
+      const account: AccountEntity = new AccountEntity({
         username: user.username,
         email: user.email,
         password: hashedPassword,
-        company: new CompanyEntity({
-          companyCNPJ: user.companyCNPJ,
-          companyCustomes: user.companyCustomers,
-          companyEmplooyes: user.companyEmployees,
-          companyName: user.companyname,
-          companyType: user.companyType,
-        }),
       });
-      await this.database.registerAccount(userToRegister);
-      await this.createBaseFunnle(userToRegister.accountId);
+      const company: CompanyEntity = new CompanyEntity({
+        companyCNPJ: user.companyCNPJ,
+        companyCustomes: user.companyCustomers,
+        companyEmplooyes: user.companyEmployees,
+        companyName: user.companyname,
+        companyType: user.companyType,
+      });
+      await this.database.registerAccount({
+        account,
+        company,
+      });
+      // await this.createBaseFunnel(account.accountId);
     } catch (excepetion) {
       if (excepetion instanceof AuthUserAlreadyRegistered) {
         throw new ConflictException(excepetion.message);

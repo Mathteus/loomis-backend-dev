@@ -1,38 +1,73 @@
 import { Injectable } from '@nestjs/common';
-import { AccountEntity } from '../entities/account';
 import {
-  IAccount,
   IVerifyUserReponse,
   AccountsRepository,
+  IRegisterProps,
 } from '../repositories/accounts-repository';
 import { PrismaService } from './config/prisma.service';
-import { AuthUserNotExists } from '@/http/auth/auth.errors';
-import { AccountRoles } from '@prisma/client';
+import {
+  AuthUserAlreadyRegistered,
+  AuthUserNotExists,
+} from '@/http/auth/auth.errors';
+import { roles_account } from '@prisma/client';
 
 @Injectable()
 export class PrismaAccountsRepository implements AccountsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async registerAccount(newUser: AccountEntity): Promise<void> {
-    const response = await this.prisma.company.create({
-      data: {
-        companyid: newUser.company.companyId,
-        companyname: newUser.company.companyName,
-        companycnpj: newUser.company.companyCNPJ,
-        companycustomers: newUser.company.getCustomesString(),
-        companyemployees: newUser.company.getEmployeesString(),
-        companytype: newUser.company.getTypeString(),
+  async registerAccount(record: IRegisterProps): Promise<void> {
+    const existingCompany = await this.prisma.companies.findFirst({
+      where: {
+        companycnpj: record.company.companyCNPJ,
       },
     });
 
-    await this.prisma.accounts.create({
+    const company =
+      existingCompany ??
+      (await this.prisma.companies.create({
+        data: {
+          companyid: record.company.companyId,
+          companyname: record.company.companyName,
+          companycnpj: record.company.companyCNPJ,
+          companycustomers: record.company.getCustomesPrima(),
+          companyemployees: record.company.getEmployeesPrisma(),
+          companytype: record.company.getTypePrisma(),
+        },
+      }));
+
+    const existingAccount = await this.prisma.accounts.findFirst({
+      where: {
+        email: record.account.email,
+      },
+    });
+
+    const account =
+      existingAccount ??
+      (await this.prisma.accounts.create({
+        data: {
+          accountid: record.account.accountId,
+          username: record.account.username,
+          email: record.account.email,
+          password: record.account.password,
+          role: record.account.getRolePrisma() ?? roles_account.member,
+        },
+      }));
+
+    const existingLink = await this.prisma.company_accounts.findFirst({
+      where: {
+        companyid: company.companyid,
+        accountid: account.accountid,
+      },
+    });
+
+    if (existingLink) {
+      throw new AuthUserAlreadyRegistered();
+    }
+
+    await this.prisma.company_accounts.create({
       data: {
-        acountid: newUser.accountId,
-        username: newUser.username,
-        email: newUser.email,
-        password: newUser.password,
-        role: AccountRoles.CLIENT,
-        companyCompanyid: response.companyid,
+        companyid: company.companyid,
+        accountid: account.accountid,
       },
     });
   }
@@ -49,17 +84,17 @@ export class PrismaAccountsRepository implements AccountsRepository {
     }
 
     return {
-      acountid: String(response?.acountid),
+      acountid: String(response?.accountid),
       hash: String(response?.password),
       username: String(response?.username),
       role: String(response?.role),
     };
   }
 
-  async searchAccountById(acountid: string): Promise<IVerifyUserReponse> {
+  async searchAccountById(accountid: string): Promise<IVerifyUserReponse> {
     const response = await this.prisma.accounts.findFirst({
       where: {
-        acountid,
+        accountid,
       },
     });
 
@@ -68,15 +103,11 @@ export class PrismaAccountsRepository implements AccountsRepository {
     }
 
     return {
-      acountid: String(response?.acountid),
+      acountid: String(response?.accountid),
       hash: String(response?.password),
       username: String(response?.username),
       role: String(response?.role),
     };
-  }
-
-  async getAllAccounts(): Promise<Array<IAccount>> {
-    return await this.prisma.accounts.findMany();
   }
 
   async changePasswordFromAccount(
@@ -85,7 +116,7 @@ export class PrismaAccountsRepository implements AccountsRepository {
   ): Promise<void> {
     const response = await this.prisma.accounts.update({
       where: {
-        acountid: accountId,
+        accountid: accountId,
       },
       data: {
         password: newPassword,

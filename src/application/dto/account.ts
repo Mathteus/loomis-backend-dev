@@ -6,24 +6,21 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsStrongPassword,
-  IsUUID,
   MinLength,
 } from 'class-validator';
 import {
-  companyCustomesEnum,
-  companyEmployeesEnum,
+  CompanyCustomesEnum,
+  CompanyEmployeesEnum,
   companyTypeEnum,
 } from '../entities/company';
 import { IsCNPJ } from '@/decorators/is-cnpj.decorator';
-import { PaymentPlanIntent } from '../entities/intent-account';
 
 export class AccountSignInDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
-  @IsStrongPassword()
+  @IsString()
   @IsNotEmpty()
   @MinLength(8)
   password: string;
@@ -55,7 +52,7 @@ export class AccountSingUpDto {
   @IsNotEmpty()
   email: string;
 
-  @IsStrongPassword()
+  @IsString()
   @IsNotEmpty()
   @MinLength(8)
   password: string;
@@ -74,13 +71,13 @@ export class AccountSingUpDto {
   @IsNotEmpty()
   companyType: companyTypeEnum;
 
-  @IsEnum(companyCustomesEnum)
+  @IsEnum(CompanyCustomesEnum)
   @IsNotEmpty()
-  companyCustomers: companyCustomesEnum;
+  companyCustomers: CompanyCustomesEnum;
 
-  @IsEnum(companyEmployeesEnum)
+  @IsEnum(CompanyEmployeesEnum)
   @IsNotEmpty()
-  companyEmployees: companyEmployeesEnum;
+  companyEmployees: CompanyEmployeesEnum;
 
   @IsArray()
   @IsOptional()
@@ -89,18 +86,4 @@ export class AccountSingUpDto {
     { each: true, message: 'A lista de emails deve conteer emails válidos!' },
   )
   emailsInvite: Array<string>;
-}
-
-export class AccountIntent {
-  @IsUUID()
-  @IsNotEmpty()
-  paymentId: string;
-
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
-
-  @IsEnum(PaymentPlanIntent)
-  @IsNotEmpty()
-  paymentPlan: string;
 }

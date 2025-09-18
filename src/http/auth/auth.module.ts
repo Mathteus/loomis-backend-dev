@@ -14,15 +14,7 @@ import { JwtOwnService } from '@/common/jwt/jwt.service';
 import { RedisRefreshTokensService } from '@/application/database/redis-refresh-token';
 import { RefreshTokensRepository } from '@/application/repositories/refreshs-tokens.repository';
 import { HashGeneratorService } from '@/common/hash/hash-generator.service';
-import { IntentAccountRepository } from '@/application/repositories/intent-account.repository';
-import { PrimaAccountIntentService } from '@/application/database/prisma-intent-account';
-import { ChatRepository } from '@/application/repositories/chat-repository';
-import { PrismaChatRepository } from '@/application/database/prisma-chat.repository';
 import { RedisService } from '@/application/database/config/redis.service';
-import { FunnelRepository } from '@/application/repositories/funnel.repository';
-import { PrismaFunnelRepository } from '@/application/database/prisma-funnel.repository';
-import { PipelineRepository } from '@/application/repositories/pipeline.repository';
-import { PrismaPipelineRepository } from '@/application/database/prisma-pipeline.repository';
 
 @Module({
   imports: [],
@@ -39,10 +31,10 @@ import { PrismaPipelineRepository } from '@/application/database/prisma-pipeline
       provide: RefreshTokensRepository,
       useClass: RedisRefreshTokensService,
     },
-    {
-      provide: IntentAccountRepository,
-      useClass: PrimaAccountIntentService,
-    },
+    // {
+    //   provide: IntentAccountRepository,
+    //   useClass: PrimaAccountIntentService,
+    // },
     {
       provide: EmailService,
       useClass: ResendService,
@@ -51,14 +43,14 @@ import { PrismaPipelineRepository } from '@/application/database/prisma-pipeline
       provide: CodeGeneratorService,
       useClass: TotpService,
     },
-    {
-      provide: FunnelRepository,
-      useClass: PrismaFunnelRepository,
-    },
-    {
-      provide: PipelineRepository,
-      useClass: PrismaPipelineRepository,
-    },
+    // {
+    //   provide: FunnelRepository,
+    //   useClass: PrismaFunnelRepository,
+    // },
+    // {
+    //   provide: PipelineRepository,
+    //   useClass: PrismaPipelineRepository,
+    // },
     AuthService,
     BcryptService,
     PrismaService,
