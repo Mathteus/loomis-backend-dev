@@ -1,0 +1,48 @@
+type Contact {
+  "avatarUrl": "https://github.com/Mathteus.png",
+  "name": "Matheus Henrique",
+  "email": "Matheus.Henrique@email.com",
+  "phone": "12996781425",
+  "document_rg": "25814736905",
+  "document_cpf": "25814736905",
+  "birthday": "",
+  "gender": "masculine",
+  "role": "client",
+  "city": "São Paulo",
+  "stateUF": "SP",
+  "company": "Brand",
+  "segment": "STARTUP",
+  "leadSource": "instagram",
+  "collaboratorId": "5a4a970c-14de-407c-832a-dc88ea2b7cde",
+  "tags": {
+    "title": "Lead Ativo",
+    "color": "#17B26A",
+    "bgColor": "#17B26A1A",
+  },
+  "funnel_name": "Funil A"
+}
+
+
+POST /contacts?page=1
+body: Contact
+response: array of Contact
+
+GET /contacts?page=1
+response: array of Contact
+
+GET /contacts:contactId?page=1
+response: Contact
+
+GET /contacts/filter?page=1
+
+response: array of Contact
+
+GET /contacts/employees
+response: array of Contact
+
+PATCH /contacts:contactId?page=1
+body: Contact
+response: array of Contact
+
+DELETE /contacts:contactId?page=1
+response: array of Contact
