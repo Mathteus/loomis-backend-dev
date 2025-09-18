@@ -154,14 +154,6 @@ export class GetItemPipeByIdDto {
 export class createItemPipeDto {
   @IsUUID()
   @IsNotEmpty()
-  accountId: string;
-
-  @IsUUID()
-  @IsNotEmpty()
-  funnelId: string;
-
-  @IsUUID()
-  @IsNotEmpty()
   pipelineId: string;
 
   @IsString()
