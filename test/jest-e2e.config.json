@@ -8,9 +8,18 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "globals": {
+    "ts-jest": {
+      "diagnostics": false
+    }
+  },
   "testEnvironment": "node",
   "rootDir": "../",
   "moduleNameMapper": {
-    "^@/(.*)$": "<rootDir>/src/1$"
+    "^@/(.*)$": "<rootDir>/src/$1",
+    "^nanoid$": "<rootDir>/test/stubs/nanoid.ts",
+    "^@prisma/client$": "<rootDir>/test/stubs/prisma-client.ts",
+    "^@/http/auth/auth.guard$": "<rootDir>/test/mocks/dummy-auth.guard.ts",
+    "^@/http/auth/auth.controller$": "<rootDir>/test/mocks/auth.controller.ts"
   }
 }
