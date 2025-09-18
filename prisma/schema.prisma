@@ -3,23 +3,197 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-enum AccountRoles {
-  ADMIN
-  CLIENT
+model accounts {
+  accountid       String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username        String                  @unique
+  email           String                  @unique
+  password        String
+  role            roles_account           @default(member)
+  created_at      DateTime                @default(now()) @db.Timestamptz(6)
+  companyAccounts company_accounts[]
+  contactAccounts contacts_accounts[]
+  funnels         funnels[]
+  opportunities   opportunities[]
+  movedLogs       opportunity_movements[] @relation("MovedByAccount")
+  tasks           tasks[]
+
+  @@index([email], map: "idx_email_account")
 }
 
-enum CompanyType {
+model companies {
+  companyid        String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyname      String
+  companycnpj      String             @unique
+  companytype      company_type
+  companycustomers company_customers
+  companyemployees company_employees
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  companyAccounts  company_accounts[]
+
+  @@index([companycnpj], map: "idx_companycnpj_companies")
+}
+
+model company_accounts {
+  company_accounts_id String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyid           String    @db.Uuid
+  accountid           String    @db.Uuid
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  account             accounts  @relation(fields: [accountid], references: [accountid], onDelete: NoAction, onUpdate: NoAction)
+  company             companies @relation(fields: [companyid], references: [companyid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model contacts {
+  contactid           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username            String
+  email               String
+  phone               String
+  document_rg         String
+  document_cpf        String
+  role                roles_contact
+  birthday            DateTime            @db.Date
+  genere              genere
+  city                String
+  state               String
+  created_at          DateTime            @default(now()) @db.Timestamptz(6)
+  avatar_url          String
+  company             String?
+  segment             company_type?
+  employeer           String?             @db.Uuid
+  lead_source         String?
+  funnel_name         String?
+  contactAccounts     contacts_accounts[]
+  contacts_tags       contacts_tags[]
+  asCollaborator      opportunities[]     @relation("OpportunityCollaborator")
+  asCustomer          opportunities[]     @relation("OpportunityContact")
+  tasksAsClient       tasks[]             @relation("TaskClient")
+  tasksAsCollaborator tasks[]             @relation("TaskCollaborator")
+
+  @@index([document_cpf], map: "idx_document_cpf_contacts")
+  @@index([role], map: "idx_role_contacts")
+}
+
+model contacts_accounts {
+  contact_accounts_id String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contactid           String   @db.Uuid
+  accountid           String   @db.Uuid
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  account             accounts @relation(fields: [accountid], references: [accountid], onDelete: NoAction, onUpdate: NoAction)
+  contact             contacts @relation(fields: [contactid], references: [contactid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model funnels {
+  funnelid   String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountid  String      @db.Uuid
+  funnelname String
+  is_default Boolean     @default(false)
+  created_at DateTime    @default(now()) @db.Timestamptz(6)
+  account    accounts    @relation(fields: [accountid], references: [accountid], onDelete: NoAction, onUpdate: NoAction)
+  pipelines  pipelines[]
+
+  @@index([accountid], map: "idx_funnels_accountid")
+}
+
+model pipelines {
+  pipelineid    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  funnelid      String                  @db.Uuid
+  position      Int                     @default(autoincrement())
+  pipelinename  String
+  headcolor     String
+  is_default    Boolean                 @default(false)
+  is_protected  Boolean                 @default(false)
+  created_at    DateTime                @default(now()) @db.Timestamptz(6)
+  opportunities opportunities[]
+  movedFrom     opportunity_movements[] @relation("FromPipeline")
+  movedTo       opportunity_movements[] @relation("ToPipeline")
+  funnel        funnels                 @relation(fields: [funnelid], references: [funnelid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([funnelid, position], map: "unique_position_per_funnel")
+  @@index([funnelid, position], map: "idx_pipelines_funnelid_position")
+}
+
+model opportunities {
+  opportunityid String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pipelineid    String                  @db.Uuid
+  contactid     String                  @db.Uuid
+  colaboratorid String                  @db.Uuid
+  amount        Decimal                 @default(0) @db.Decimal
+  tags          String[]                @default([])
+  created_at    DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime                @default(now()) @db.Timestamptz(6)
+  accountid     String                  @db.Uuid
+  accounts      accounts                @relation(fields: [accountid], references: [accountid], onDelete: NoAction, onUpdate: NoAction, map: "accountid_fkey")
+  colaborator   contacts                @relation("OpportunityCollaborator", fields: [colaboratorid], references: [contactid], onDelete: NoAction, onUpdate: NoAction)
+  contact       contacts                @relation("OpportunityContact", fields: [contactid], references: [contactid], onDelete: NoAction, onUpdate: NoAction)
+  pipeline      pipelines               @relation(fields: [pipelineid], references: [pipelineid], onDelete: NoAction, onUpdate: NoAction)
+  movements     opportunity_movements[]
+
+  @@index([contactid], map: "idx_opportunities_contactid")
+  @@index([pipelineid], map: "idx_opportunities_pipelineid")
+  @@index([accountid], map: "idx_opportunities_accountid")
+}
+
+model opportunity_movements {
+  movementid      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  opportunityid   String        @db.Uuid
+  from_pipelineid String?       @db.Uuid
+  to_pipelineid   String        @db.Uuid
+  moved_by        String        @db.Uuid
+  moved_at        DateTime      @default(now()) @db.Timestamptz(6)
+  fromPipeline    pipelines?    @relation("FromPipeline", fields: [from_pipelineid], references: [pipelineid], onDelete: NoAction, onUpdate: NoAction)
+  movedBy         accounts      @relation("MovedByAccount", fields: [moved_by], references: [accountid], onDelete: NoAction, onUpdate: NoAction)
+  opportunity     opportunities @relation(fields: [opportunityid], references: [opportunityid], onDelete: NoAction, onUpdate: NoAction)
+  toPipeline      pipelines     @relation("ToPipeline", fields: [to_pipelineid], references: [pipelineid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model tasks {
+  taskid         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountid      String   @db.Uuid
+  taskname       String
+  statetask      state    @default(pending)
+  description    String
+  clientid       String   @db.Uuid
+  collaboratorid String   @db.Uuid
+  to_date        DateTime @db.Timestamptz(6)
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  account        accounts @relation(fields: [accountid], references: [accountid], onDelete: NoAction, onUpdate: NoAction)
+  client         contacts @relation("TaskClient", fields: [clientid], references: [contactid], onDelete: NoAction, onUpdate: NoAction)
+  collaborator   contacts @relation("TaskCollaborator", fields: [collaboratorid], references: [contactid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([accountid], map: "idx_tasks_accountid")
+}
+
+model contacts_tags {
+  contacts_tags Int      @id @default(autoincrement())
+  contactid     String   @db.Uuid
+  tagid         Int
+  contacts      contacts @relation(fields: [contactid], references: [contactid], onDelete: NoAction, onUpdate: NoAction, map: "contactid_fkey")
+  tags          tags     @relation(fields: [tagid], references: [tagid], onDelete: NoAction, onUpdate: NoAction, map: "tagid_fkey")
+}
+
+model tags {
+  tagid         Int             @id @default(autoincrement())
+  tagname       String          @unique @db.VarChar(50)
+  tagcolor      String          @db.VarChar(8)
+  contacts_tags contacts_tags[]
+}
+
+enum roles_account {
+  member
+  admin
+}
+
+enum company_type {
   DIGITAL_MARKETING_AGENCY
   SERVICE_COMPANY
   BUSINESS
   STARTUP
 }
 
-enum CompanyCustomers {
+enum company_customers {
   C1_10
   C11_20
   C21_50
@@ -27,174 +201,27 @@ enum CompanyCustomers {
   C100P
 }
 
-enum CompanyEmployees {
+enum company_employees {
   JUST_ME
-  C1_10
-  C11_20
-  C21_50
-  C51_100
-  C100P
+  E1_10
+  E11_20
+  E21_50
+  E51_100
+  E100P
 }
 
-enum PaymentStatus {
-  PENDING
-  PAID
+enum roles_contact {
+  client
+  employee
 }
 
-enum PaymentPlan {
-  STANDARD
-  PLUS
-  PREMIUM
+enum genere {
+  masculine
+  feminine
 }
 
-model Company {
-  companyid        String           @id
-  companyname      String
-  companycnpj      String           @unique
-  companytype      CompanyType
-  companycustomers CompanyCustomers
-  companyemployees CompanyEmployees
-  Accounts         Accounts[]
-}
-
-model Accounts {
-  acountid         String       @id
-  createAt         DateTime     @default(now())
-  username         String       @unique
-  email            String       @unique
-  password         String
-  role             AccountRoles @default(CLIENT)
-  companyCompanyid String
-  company          Company      @relation(fields: [companyCompanyid], references: [companyid])
-  Funnel           Funnel[]
-
-  @@index([email])
-}
-
-model IntentAccount {
-  intentid      String        @id @default(uuid())
-  createAt      DateTime      @default(now())
-  email         String        @unique
-  paymentid     String        @unique
-  plan          PaymentPlan
-  paymentstatus PaymentStatus @default(PENDING)
-
-  @@index([email])
-}
-
-model Funnel {
-  funnelid   String     @id @default(uuid())
-  title     String
-  accountId String
-  account   Accounts   @relation(fields: [accountId], references: [acountid])
-  pipelines Pipeline[]
-  orderPipes String     @default("[]")
-
-  @@index([accountId])
-  @@map("Funnels")
-}
-
-model Pipeline {
-  pipeid    String     @id @default(uuid())
-  title     String
-  isDefaut  Boolean    @default(false)
-  headColor String
-  funnelId  String
-  items     ItemPipe[]
-  funnel    Funnel     @relation(fields: [funnelId], references: [funnelid], onDelete: Cascade)
-
-  @@index([funnelId])
-  @@map("Pipelines")
-}
-
-model ItemPipe {
-  itemid         String   @id @default(uuid())
-  title          String
-  contactId      String
-  collaboratorId String
-  amount         Float
-  tags           String   @default("[]")
-  accountId      String
-  pipelineId     String
-  pipeline       Pipeline @relation(fields: [pipelineId], references: [pipeid], onDelete: Cascade)
-
-  @@index([pipelineId])
-  @@map("Opportunities")
-}
-
-enum MessageType {
-  TEXT
-  IMAGE
-  VIDEO
-  AUDIO
-  FILE
-}
-
-enum ScheduledStatus {
-  PENDING
-  SENT
-  CANCELED
-}
-
-model Contact {
-  contactId      String @id
-  username       String
-  collaboratorId String
-  phone          String
-  email          String
-  companyId      String
-}
-
-// Conversation between two account ids; store pair in sorted order a<=b
-model Conversation {
-  id             String    @id @default(uuid())
-  participantAId String
-  participantBId String
-  createdAt      DateTime  @default(now())
-  messages       Message[]
-
-  @@unique([participantAId, participantBId])
-  @@index([participantAId])
-  @@index([participantBId])
-}
-
-model Message {
-  id             String       @id @default(uuid())
-  conversationId String
-  senderId       String
-  receiverId     String
-  contentType    MessageType
-  contentData    String
-  timestamp      DateTime     @default(now())
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  @@index([conversationId])
-  @@index([senderId])
-  @@index([receiverId])
-}
-
-model QuickMessage {
-  id          String      @id @default(uuid())
-  accountId   String
-  title       String?
-  contentType MessageType
-  contentData String
-  createdAt   DateTime    @default(now())
-
-  @@index([accountId])
-}
-
-model ScheduledMessage {
-  id          String          @id @default(uuid())
-  senderId    String
-  receiverId  String
-  contentType MessageType
-  contentData String
-  scheduleAt  DateTime
-  status      ScheduledStatus @default(PENDING)
-  createdAt   DateTime        @default(now())
-
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([scheduleAt])
+enum state {
+  pending
+  in_progress
+  completed
 }
