@@ -7,22 +7,16 @@ import { APP_GUARD } from '@nestjs/core';
 import { PassportModule } from '@nestjs/passport';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-ioredis-yet';
-// import { WebhooksController } from './http/webhooks/webhooks.controller';
-// import { WebhooksService } from './http/webhooks/webhooks.service';
-// import { ChatController } from './http/chat/chat.controller';
-// import { ChatService } from './http/chat/chat.service';
-// import { ChatModule } from './http/chat/chat.module';
-// import { FunnelController } from './http/funnel/funnel.controller';
-// import { FunnelService } from './http/funnel/funnel.service';
-// import { FunnelModule } from './http/funnel/funnel.module';
 import { PermissionsGuard } from './http/auth/permissions.guard';
 import { HashGeneratorService } from './common/hash/hash-generator.service';
 import { RedisService } from './application/database/config/redis.service';
 import { RedisRefreshTokensService } from './application/database/redis-refresh-token';
 import { EnviromentService } from './application/env/env.service';
-import { ContactService } from './http/contact/contact.service';
 import { ContactModule } from './http/contact/contact.module';
 import { CheckModule } from './http/check/check.module';
+import { MonitorModule } from './http/monitor/monitor.module';
+// import { ChatModule } from './http/chat/chat.module';
+// import { FunnelModule } from './http/funnel/funnel.module';
 
 @Module({
   imports: [
@@ -33,8 +27,8 @@ import { CheckModule } from './http/check/check.module';
       inject: [ConfigService],
       global: true,
       useFactory: (config: ConfigService) => ({
-        secret: config.getOrThrow('JWT_TOKEN'),
-        signOptions: { expiresIn: '1h' },
+        secret: config.getOrThrow<string>('JWT_TOKEN'),
+        signOptions: { expiresIn: '4h' },
         global: true,
       }),
     }),
@@ -48,6 +42,7 @@ import { CheckModule } from './http/check/check.module';
           port: config.getOrThrow<string>('REDIS_PORT'),
           password: config.getOrThrow<string>('REDIS_PASSWORD'),
           ttl: config.getOrThrow<number>('REDIS_TTL', 3600),
+          username: config.getOrThrow<string>('REDIS_USERNAME'),
         }),
       }),
     }),
@@ -57,6 +52,7 @@ import { CheckModule } from './http/check/check.module';
     PassportModule,
     CheckModule,
     ContactModule,
+    MonitorModule,
   ],
   providers: [
     {
@@ -67,18 +63,10 @@ import { CheckModule } from './http/check/check.module';
       provide: APP_GUARD,
       useClass: PermissionsGuard,
     },
-    // WebhooksService,
-    // ChatService,
-    // FunnelService,
     HashGeneratorService,
     RedisService,
     RedisRefreshTokensService,
     EnviromentService,
-  ],
-  controllers: [
-    // WebhooksController,
-    // ChatController,
-    // FunnelController,
   ],
   exports: [HashGeneratorService],
 })
