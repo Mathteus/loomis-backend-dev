@@ -1,0 +1,15 @@
+dist/
+node_modules/
+.github/
+.qodo/
+prisma/
+generated/
+test/
+.gitignore
+.prettierrc
+.eslintrc.js
+.env
+commitlint.config.js
+eslint.config.js
+README.md
+prompt.sh
