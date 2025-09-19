@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IS_PROTECTED_KEY } from '@/decorators/protected.decorator';
+import { IS_PUBLIC_KEY } from '@/decorators/public.decorator';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
@@ -62,6 +63,10 @@ export class AuthGuard extends JwtStrategy {
       IS_PROTECTED_KEY,
       [context.getHandler(), context.getClass()],
     );
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
     const isRecoveryTicket = this.reflector.getAllAndOverride<boolean>(
       IS_RECOVERY_TICKET,
       [context.getHandler(), context.getClass()],
@@ -70,6 +75,10 @@ export class AuthGuard extends JwtStrategy {
       IS_RESET_TICKET,
       [context.getHandler(), context.getClass()],
     );
+
+    if (isPublic) {
+      return true;
+    }
 
     if (!tokenXApiKey) {
       throw new UnauthorizedException();

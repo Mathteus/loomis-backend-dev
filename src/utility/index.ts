@@ -50,7 +50,6 @@ export function isEmailValido(email: string): boolean {
     return false;
   }
 
-  // Expressão regular para validar a maioria dos formatos de e-mail comuns.
   const emailRegex = new RegExp(
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
   );
@@ -66,7 +65,6 @@ export function randomString(
   const charSize = characters.length;
 
   for (let i = 0; i < size; i++) {
-    // Escolhe um caractere aleatório do conjunto fornecido
     const index = Math.floor(Math.random() * charSize);
     result += characters.charAt(index);
   }
