@@ -16,12 +16,12 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
   app.enableCors({
-    origin: [`http://localhost:5000`, 'loomis-dev-app.netlify.app'],
+    origin: [`http://localhost:10000`, 'loomis-dev-app.netlify.app'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
-  await app.listen(Number(process.env.PORT) || 5000);
+  await app.listen(Number(process.env.PORT) || 10000);
 }
 bootstrap();
