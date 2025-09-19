@@ -1,12 +1,18 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 @Injectable()
-export class MemoryMonitorService implements OnModuleInit {
-  private readonly logger = new Logger(MemoryMonitorService.name);
+export class MonitorService implements OnModuleInit {
+  private readonly logger = new Logger(MonitorService.name);
   private monitoringInterval: NodeJS.Timeout;
 
   onModuleInit() {
     this.startMemoryMonitoring();
+  }
+
+  OnModuleDestroy() {
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+    }
   }
 
   startMemoryMonitoring(intervalMs: number = 30000) {
@@ -30,16 +36,21 @@ export class MemoryMonitorService implements OnModuleInit {
   }
 
   private logMemoryUsage(memoryUsage: NodeJS.MemoryUsage) {
-    this.logger.debug(`
-      Memória RSS: ${Math.round(memoryUsage.rss / 1024 / 1024)}MB
-      Heap Total: ${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB
-      Heap Usada: ${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB
-      Memória Externa: ${Math.round(memoryUsage.external / 1024 / 1024)}MB
-      Array Buffers: ${Math.round(memoryUsage.arrayBuffers / 1024 / 1024)}MB
-    `);
+    this.logger.debug(JSON.stringify(this.formatMemoryUsage(memoryUsage)));
+  }
+
+  private formatMemoryUsage(memoryUsage: NodeJS.MemoryUsage) {
+    return {
+      rss: `${Math.round(memoryUsage.rss / 1024 / 1024)}MB`,
+      heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`,
+      heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`,
+      external: `${Math.round(memoryUsage.external / 1024 / 1024)}MB`,
+      arrayBuffers: `${Math.round(memoryUsage.arrayBuffers / 1024 / 1024)}MB`,
+      timestamp: new Date().toISOString(),
+    };
   }
 
   getCurrentMemoryUsage() {
-    return process.memoryUsage();
+    return this.formatMemoryUsage(process.memoryUsage());
   }
 }

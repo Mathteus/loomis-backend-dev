@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { MemoryMonitorService } from './monitor.service';
+import { MonitorService } from './monitor.service';
+import { MonitorController } from './monitor.controller';
 
 @Module({
-  providers: [MemoryMonitorService],
-  exports: [MemoryMonitorService],
+  controllers: [MonitorController],
+  providers: [MonitorService],
 })
 export class MonitorModule {}

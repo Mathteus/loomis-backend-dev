@@ -91,7 +91,7 @@ export class CreateContact {
   tags: ITag[];
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   funnel_name: string;
 }
 
