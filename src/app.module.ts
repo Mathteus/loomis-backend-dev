@@ -15,7 +15,6 @@ import { EnviromentService } from './application/env/env.service';
 import { ContactModule } from './http/contact/contact.module';
 import { CheckModule } from './http/check/check.module';
 import { MonitorModule } from './http/monitor/monitor.module';
-import { url } from 'inspector';
 // import { ChatModule } from './http/chat/chat.module';
 // import { FunnelModule } from './http/funnel/funnel.module';
 
