@@ -12,7 +12,7 @@ import { Request } from 'express';
 import { JwtStrategy } from './jwt.strategy';
 import { IS_RESET_TICKET } from '@/decorators/reset-ticket.decorator';
 import { IS_RECOVERY_TICKET } from '@/decorators/recovery-ticket.decorator';
-import { RedisRefreshTokensService } from '@/application/database/redis-refresh-token';
+import { PrismaRefreshTokenService } from '@/application/database/prisma-refresh-token';
 
 interface JwtPayload {
   body?: unknown;
@@ -28,7 +28,7 @@ export class AuthGuard extends JwtStrategy {
     private readonly jwt: JwtService,
     private readonly configService: ConfigService,
     private readonly reflector: Reflector,
-    private readonly refreshTokensCache: RedisRefreshTokensService,
+    private readonly refreshTokensCache: PrismaRefreshTokenService,
   ) {
     super(configService);
     this.jwtSecret = this.configService.getOrThrow<string>('JWT_TOKEN');

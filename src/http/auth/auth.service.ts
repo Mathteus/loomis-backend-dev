@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -21,7 +20,6 @@ import {
 import { CodeGeneratorService } from '@/common/code-generator/code-generator';
 import { JwtEntity } from '@/application/entities/jwt';
 import { JwtOwnService } from '@/common/jwt/jwt.service';
-import { HashGeneratorService } from '@/common/hash/hash-generator.service';
 import { EmailService } from '@/application/email/email.service';
 import { RefreshTokensRepository } from '@/application/repositories/refreshs-tokens.repository';
 import { PasswordHasherService } from '@/common/password-hasher/password-hasher';
@@ -37,7 +35,6 @@ export class AuthService {
     private readonly code: CodeGeneratorService,
     private readonly email: EmailService,
     private readonly refreshTokensCache: RefreshTokensRepository,
-    private readonly hasher: HashGeneratorService,
     // private readonly funnelsRepository: FunnelRepository,
     // private readonly pipelinesRepository: PipelineRepository,
   ) {}
@@ -84,16 +81,14 @@ export class AuthService {
         company,
       });
       // await this.createBaseFunnel(account.accountId);
-    } catch (excepetion) {
-      if (excepetion instanceof AuthUserAlreadyRegistered) {
-        throw new ConflictException(excepetion.message);
+    } catch (err) {
+      if (err instanceof AuthUserAlreadyRegistered) {
+        throw new ConflictException(err.message);
       }
 
-      if (excepetion instanceof Error) {
-        throw new BadRequestException(excepetion.message);
+      if (err instanceof Error) {
+        throw new InternalServerErrorException(err.message);
       }
-
-      throw new InternalServerErrorException();
     }
   }
 
@@ -109,8 +104,9 @@ export class AuthService {
         throw new AuthUserNotExists();
       }
 
-      const hash = this.hasher.createSHA256();
-      await this.refreshTokensCache.regiterToken(hash, userFound.acountid);
+      const hash = await this.refreshTokensCache.regiterToken(
+        userFound.acountid,
+      );
 
       const accessToken = await this.ownJwt.sign({
         customTime: '4h',
@@ -135,16 +131,14 @@ export class AuthService {
         accessToken,
         refreshToken,
       };
-    } catch (excepetion) {
-      if (excepetion instanceof AuthUserNotExists) {
-        throw new UnauthorizedException(excepetion.message);
+    } catch (err) {
+      if (err instanceof AuthUserNotExists) {
+        throw new UnauthorizedException(err.message);
       }
 
-      if (excepetion instanceof Error) {
-        throw new BadRequestException(excepetion.message);
+      if (err instanceof Error) {
+        throw new InternalServerErrorException(err.message);
       }
-
-      throw new InternalServerErrorException();
     }
   }
 
@@ -155,8 +149,9 @@ export class AuthService {
         throw new AuthUserNotExists();
       }
 
-      const hash = this.hasher.createSHA256();
-      await this.refreshTokensCache.regiterToken(hash, userFound.acountid);
+      const hash = await this.refreshTokensCache.regiterToken(
+        userFound.acountid,
+      );
 
       const accesstoken = await this.ownJwt.sign({
         customTime: '4h',
@@ -180,16 +175,14 @@ export class AuthService {
         accesstoken,
         refreshToken,
       };
-    } catch (excepetion) {
-      if (excepetion instanceof AuthUserNotExists) {
-        throw new UnauthorizedException(excepetion.message);
+    } catch (err) {
+      if (err instanceof AuthUserNotExists) {
+        throw new UnauthorizedException(err.message);
       }
 
-      if (excepetion instanceof Error) {
-        throw new BadRequestException();
+      if (err instanceof Error) {
+        throw new InternalServerErrorException(err.message);
       }
-
-      throw new InternalServerErrorException();
     }
   }
 
@@ -205,8 +198,9 @@ export class AuthService {
         to: account.email,
       });
 
-      const hash = this.hasher.createSHA256(userFound.acountid);
-      await this.refreshTokensCache.regiterToken(hash, userFound.acountid);
+      const hash = await this.refreshTokensCache.regiterToken(
+        userFound.acountid,
+      );
 
       const recoveryToken = await this.ownJwt.sign({
         payload: new JwtEntity({
@@ -221,16 +215,14 @@ export class AuthService {
         message:
           'Se exister uma conta com o e-mail, você receberá um código de verificação ! atenção: verifique sua caixa de email, até mesmo lixeira e spans !',
       };
-    } catch (excepetion) {
-      if (excepetion instanceof AuthUserNotExists) {
-        throw new UnauthorizedException(excepetion.message);
+    } catch (err) {
+      if (err instanceof AuthUserNotExists) {
+        throw new UnauthorizedException(err.message);
       }
 
-      if (excepetion instanceof Error) {
-        throw new BadRequestException(excepetion.message);
+      if (err instanceof Error) {
+        throw new InternalServerErrorException(err.message);
       }
-
-      throw new InternalServerErrorException();
     }
   }
 
@@ -244,7 +236,9 @@ export class AuthService {
         throw new AuthUserNotExists();
       }
 
-      const hash = this.hasher.createSHA256(userFound.acountid);
+      const hash = await this.refreshTokensCache.regiterToken(
+        userFound.acountid,
+      );
       const recoveryPayload = new JwtEntity({
         sub: hash,
         type: 'RESET_TICKET',
@@ -254,24 +248,21 @@ export class AuthService {
         customTime: '5m',
       });
 
-      await this.refreshTokensCache.regiterToken(hash, userFound.acountid);
       return {
         resetToken,
       };
-    } catch (excepetion) {
-      if (excepetion instanceof AuthUserNotExists) {
+    } catch (err) {
+      if (err instanceof AuthUserNotExists) {
         throw new UnauthorizedException();
       }
 
-      if (excepetion instanceof AuthRecoveryCodeWrong) {
-        throw new UnauthorizedException(excepetion.message);
+      if (err instanceof AuthRecoveryCodeWrong) {
+        throw new UnauthorizedException(err.message);
       }
 
-      if (excepetion instanceof Error) {
-        throw new BadRequestException(excepetion.message);
+      if (err instanceof Error) {
+        throw new InternalServerErrorException(err.message);
       }
-
-      throw new InternalServerErrorException();
     }
   }
 
@@ -281,10 +272,8 @@ export class AuthService {
       await this.database.changePasswordFromAccount(accountId, hashedPassword);
     } catch (err) {
       if (err instanceof Error) {
-        throw new BadRequestException(err.message);
+        throw new InternalServerErrorException(err.message);
       }
-
-      throw new InternalServerErrorException();
     }
   }
 }

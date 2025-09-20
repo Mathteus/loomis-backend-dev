@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AuthController } from '@/http/auth/auth.controller';
 import { AuthService } from '@/http/auth/auth.service';
 import { AccountsRepository } from '@/application/repositories/accounts-repository';
@@ -24,11 +24,13 @@ import { HashGeneratorService } from '@/common/hash/hash-generator.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
-import { RedisRefreshTokensService } from '@/application/database/redis-refresh-token';
+import { PrismaRefreshTokenService } from '@/application/database/prisma-refresh-token';
+import { delay } from '@/utility';
 // no Prisma imports to avoid side-effects
 
 describe('Auth (e2e)', () => {
   let app: INestApplication;
+  const delayTime = 300;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -55,15 +57,26 @@ describe('Auth (e2e)', () => {
         // Satisfy potential guard deps (even if mapped)
         {
           provide: JwtService,
-          useValue: { verifyAsync: async () => ({ sub: 'x', type: 'ACCESS' }) },
+          useValue: {
+            verifyAsync: async () => {
+              await delay(delayTime);
+              return { sub: 'x', type: 'ACCESS' };
+            },
+          },
         },
         { provide: ConfigService, useValue: { getOrThrow: () => 'test' } },
         { provide: Reflector, useValue: new Reflector() },
         {
-          provide: RedisRefreshTokensService,
+          provide: PrismaRefreshTokenService,
           useValue: {
-            getTokenByHash: async () => '',
-            removeTokenByHash: async () => undefined,
+            getTokenByHash: async () => {
+              await delay(delayTime);
+              return '';
+            },
+            removeTokenByHash: async () => {
+              await delay(delayTime);
+              return undefined;
+            },
           },
         },
       ],
@@ -89,7 +102,7 @@ describe('Auth (e2e)', () => {
   };
 
   it('POST /auth/signup -> 201', async () => {
-    const res = await request((app as any).getHttpAdapter().getInstance())
+    const res = await request(app.getHttpAdapter().getInstance())
       .post('/auth/signup')
       .send(signupPayload)
       .expect(201);
@@ -98,7 +111,7 @@ describe('Auth (e2e)', () => {
   });
 
   it('POST /auth/signin -> 200 and tokens', async () => {
-    const res = await request((app as any).getHttpAdapter().getInstance())
+    const res = await request(app.getHttpAdapter().getInstance())
       .post('/auth/signin')
       .send({ email: signupPayload.email, password: signupPayload.password })
       .expect(200);

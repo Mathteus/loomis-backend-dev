@@ -22,7 +22,7 @@
     "migrate": "prisma migrate dev",
     "studio": "prisma studio",
     "push": "prisma db push",
-    "update_prisma_remote": "prisma db pull && prisma generate"
+    "prisma:pull": "prisma db pull && prisma generate"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

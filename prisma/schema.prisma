@@ -19,6 +19,7 @@ model accounts {
   funnels         funnels[]
   opportunities   opportunities[]
   movedLogs       opportunity_movements[] @relation("MovedByAccount")
+  refresh_token   refresh_token[]
   tasks           tasks[]
 
   @@index([email], map: "idx_email_account")
@@ -179,6 +180,14 @@ model tags {
   tagname       String          @unique @db.VarChar(50)
   tagcolor      String          @db.VarChar(8)
   contacts_tags contacts_tags[]
+}
+
+model refresh_token {
+  accountid       String    @db.Uuid
+  hash            String    @unique
+  last_validation DateTime? @db.Timestamp(6)
+  refreshid       Int       @id @default(autoincrement())
+  accounts        accounts  @relation(fields: [accountid], references: [accountid], onDelete: NoAction, onUpdate: NoAction, map: "constraint_1")
 }
 
 enum roles_account {

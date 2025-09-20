@@ -11,10 +11,9 @@ import { EmailService } from '@/application/email/email.service';
 import { TotpService } from '@/common/code-generator/totp.service';
 import { CodeGeneratorService } from '@/common/code-generator/code-generator';
 import { JwtOwnService } from '@/common/jwt/jwt.service';
-import { RedisRefreshTokensService } from '@/application/database/redis-refresh-token';
 import { RefreshTokensRepository } from '@/application/repositories/refreshs-tokens.repository';
 import { HashGeneratorService } from '@/common/hash/hash-generator.service';
-import { RedisService } from '@/application/database/config/redis.service';
+import { PrismaRefreshTokenService } from '@/application/database/prisma-refresh-token';
 
 @Module({
   imports: [],
@@ -29,7 +28,7 @@ import { RedisService } from '@/application/database/config/redis.service';
     },
     {
       provide: RefreshTokensRepository,
-      useClass: RedisRefreshTokensService,
+      useClass: PrismaRefreshTokenService,
     },
     // {
     //   provide: IntentAccountRepository,
@@ -58,10 +57,9 @@ import { RedisService } from '@/application/database/config/redis.service';
     TotpService,
     JwtOwnService,
     HashGeneratorService,
-    RedisService,
-    RedisRefreshTokensService,
+    PrismaRefreshTokenService,
   ],
   controllers: [AuthController],
-  exports: [AccountsRepository, RedisRefreshTokensService],
+  exports: [AccountsRepository, PrismaRefreshTokenService],
 })
 export class AuthModule {}

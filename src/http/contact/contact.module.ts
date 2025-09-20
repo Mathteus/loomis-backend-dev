@@ -6,8 +6,7 @@ import { ContactsRepository } from '@/application/repositories/contacts-reposito
 import { IdentifiersGeneratorService } from '@/common/identifiers/identifier-generator';
 import { NanoidGeneratorService } from '@/common/identifiers/nanoid-generator.service';
 import { PrismaService } from '@/application/database/config/prisma.service';
-import { RedisRefreshTokensService } from '@/application/database/redis-refresh-token';
-import { RedisService } from '@/application/database/config/redis.service';
+import { PrismaRefreshTokenService } from '@/application/database/prisma-refresh-token';
 
 @Module({
   controllers: [ContactController],
@@ -24,8 +23,7 @@ import { RedisService } from '@/application/database/config/redis.service';
     NanoidGeneratorService,
     PrismaContactsRepository,
     PrismaService,
-    RedisRefreshTokensService,
-    RedisService,
+    PrismaRefreshTokenService,
   ],
 })
 export class ContactModule {}
