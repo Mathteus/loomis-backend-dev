@@ -38,12 +38,12 @@ import { MonitorModule } from './http/monitor/monitor.module';
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => ({
         store: await redisStore({
-          // host: config.getOrThrow<string>('REDIS_HOST'),
-          // port: config.getOrThrow<string>('REDIS_PORT'),
-          // password: config.getOrThrow<string>('REDIS_PASSWORD'),
-          // username: config.getOrThrow<string>('REDIS_USERNAME'),
+          host: config.getOrThrow<string>('REDIS_HOST'),
+          username: config.getOrThrow<string>('REDIS_USERNAME'),
+          password: config.getOrThrow<string>('REDIS_PASSWORD'),
+          port: config.getOrThrow<string>('REDIS_PORT'),
           ttl: config.getOrThrow<number>('REDIS_TTL', 3600),
-          url: config.getOrThrow<string>('REDIS_URL'),
+          // url: config.getOrThrow<string>('REDIS_URL'),
         }),
       }),
     }),
