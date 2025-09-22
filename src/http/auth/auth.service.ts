@@ -23,6 +23,7 @@ import { JwtOwnService } from '@/common/jwt/jwt.service';
 import { EmailService } from '@/application/email/email.service';
 import { RefreshTokensRepository } from '@/application/repositories/refreshs-tokens.repository';
 import { PasswordHasherService } from '@/common/password-hasher/password-hasher';
+import { IUpdateAccountProps } from '../settings/settings.service';
 // import { FunnelRepository } from '@/application/repositories/funnel.repository';
 // import { PipelineRepository } from '@/application/repositories/pipeline.repository';
 
@@ -140,6 +141,13 @@ export class AuthService {
         throw new InternalServerErrorException(err.message);
       }
     }
+  }
+
+  public async updateAccount(props: IUpdateAccountProps) {
+    return await this.database.updateAccount({
+      accountId: props.accountId,
+      toUpdate: props.toUpdate,
+    });
   }
 
   public async refreshTokens(accountId: string) {

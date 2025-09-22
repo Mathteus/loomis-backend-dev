@@ -15,6 +15,24 @@ import {
 } from '../entities/company';
 import { IsCNPJ } from '@/decorators/is-cnpj.decorator';
 
+export class AccountUpdate {
+  @IsString()
+  @IsOptional()
+  avatar_url: string;
+
+  @IsString()
+  @IsOptional()
+  username: string;
+
+  @IsString()
+  @IsOptional()
+  email: string;
+
+  @IsString()
+  @IsOptional()
+  password: string;
+}
+
 export class AccountSignInDto {
   @IsEmail()
   @IsNotEmpty()

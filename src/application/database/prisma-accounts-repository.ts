@@ -3,13 +3,15 @@ import {
   IVerifyUserReponse,
   AccountsRepository,
   IRegisterProps,
+  FieldsAccountUpdate,
+  IUpdateAccountProps,
 } from '../repositories/accounts-repository';
 import { PrismaService } from './config/prisma.service';
 import {
   AuthUserAlreadyRegistered,
   AuthUserNotExists,
 } from '@/http/auth/auth.errors';
-import { roles_account } from '@prisma/client';
+import { accounts, roles_account } from '@prisma/client';
 
 @Injectable()
 export class PrismaAccountsRepository implements AccountsRepository {
@@ -126,5 +128,47 @@ export class PrismaAccountsRepository implements AccountsRepository {
     if (!response) {
       throw new Error('account Not Found!');
     }
+  }
+
+  public createAccountToUpdate(props: FieldsAccountUpdate): Partial<accounts> {
+    const accountToUpdate: Partial<accounts> = {};
+
+    if (props.avatar) {
+      accountToUpdate.avatar_url = props.avatar;
+    }
+
+    if (props.email) {
+      accountToUpdate.email = props.email;
+    }
+
+    if (props.username) {
+      accountToUpdate.username = props.username;
+    }
+
+    if (props.password) {
+      accountToUpdate.password = props.password;
+    }
+
+    if (props.role) {
+      accountToUpdate.role = props.role;
+    }
+
+    return accountToUpdate;
+  }
+
+  async updateAccount(props: IUpdateAccountProps) {
+    const { accountId, toUpdate } = props;
+    const user = await this.searchAccountById(accountId);
+
+    if (!user) {
+      throw new AuthUserNotExists();
+    }
+
+    await this.prisma.accounts.update({
+      where: {
+        accountid: accountId,
+      },
+      data: this.createAccountToUpdate(toUpdate),
+    });
   }
 }
