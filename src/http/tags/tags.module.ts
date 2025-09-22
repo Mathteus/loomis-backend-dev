@@ -12,6 +12,7 @@ import { PrismaTagsRepository } from '@/application/database/prisma-tags.reposit
       provide: TagsRepository,
       useClass: PrismaTagsRepository,
     },
+    PrismaTagsRepository,
     PrismaService,
     TagsService,
   ],

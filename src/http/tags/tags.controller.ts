@@ -25,20 +25,20 @@ export class TagsController {
 
   @Get(':tagId')
   @UseGuards(AuthGuard)
-  getTags(
-    @Param('tagId') tagId?: number,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ) {
+  async getTag(@Param('tagId') tagId?: number) {
+    if (tagId) {
+      return await this.tagsService.getTag(tagId);
+    }
+  }
+
+  @Get()
+  @UseGuards(AuthGuard)
+  async getTags(@Query('page') page?: string, @Query('limit') limit?: string) {
     if (page && limit) {
-      return this.tagsService.getTags({
+      return await this.tagsService.getTags({
         page: parseInt(page),
         limit: parseInt(limit),
       });
-    }
-
-    if (tagId) {
-      return this.tagsService.getTag(tagId);
     }
   }
 
