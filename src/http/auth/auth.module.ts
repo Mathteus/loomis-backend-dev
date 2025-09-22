@@ -30,10 +30,6 @@ import { PrismaRefreshTokenService } from '@/application/database/prisma-refresh
       provide: RefreshTokensRepository,
       useClass: PrismaRefreshTokenService,
     },
-    // {
-    //   provide: IntentAccountRepository,
-    //   useClass: PrimaAccountIntentService,
-    // },
     {
       provide: EmailService,
       useClass: ResendService,
@@ -42,14 +38,6 @@ import { PrismaRefreshTokenService } from '@/application/database/prisma-refresh
       provide: CodeGeneratorService,
       useClass: TotpService,
     },
-    // {
-    //   provide: FunnelRepository,
-    //   useClass: PrismaFunnelRepository,
-    // },
-    // {
-    //   provide: PipelineRepository,
-    //   useClass: PrismaPipelineRepository,
-    // },
     AuthService,
     BcryptService,
     PrismaService,

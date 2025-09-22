@@ -4,6 +4,7 @@ import { PrismaService } from '@/application/database/config/prisma.service';
 import { TagsService } from './tags.service';
 import { TagsRepository } from '@/application/repositories/tags-repository';
 import { PrismaTagsRepository } from '@/application/database/prisma-tags.repository';
+import { PrismaRefreshTokenService } from '@/application/database/prisma-refresh-token';
 
 @Module({
   controllers: [TagsController],
@@ -12,9 +13,10 @@ import { PrismaTagsRepository } from '@/application/database/prisma-tags.reposit
       provide: TagsRepository,
       useClass: PrismaTagsRepository,
     },
-    PrismaTagsRepository,
-    PrismaService,
     TagsService,
+    PrismaService,
+    PrismaTagsRepository,
+    PrismaRefreshTokenService,
   ],
 })
 export class TagsModule {}

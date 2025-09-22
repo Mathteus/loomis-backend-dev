@@ -5,12 +5,13 @@ import {
   TagsRepository,
   TagUpdateField,
 } from '../repositories/tags-repository';
-import { PrismaClient, tags } from '@prisma/client';
+import { tags } from '@prisma/client';
 import { TagEntity, TagNotFound } from '../entities/tag';
+import { PrismaService } from './config/prisma.service';
 
 @Injectable()
 export class PrismaTagsRepository implements TagsRepository {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaService) {}
 
   async create(props: ITagCreateProps): Promise<void> {
     const tagExists = await this.prisma.tags.findFirst({

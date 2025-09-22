@@ -21,8 +21,8 @@ import { PrismaRefreshTokenService } from '@/application/database/prisma-refresh
     },
     ContactService,
     NanoidGeneratorService,
-    PrismaContactsRepository,
     PrismaService,
+    PrismaContactsRepository,
     PrismaRefreshTokenService,
   ],
 })
