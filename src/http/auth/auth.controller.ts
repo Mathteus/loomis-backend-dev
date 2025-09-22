@@ -4,6 +4,7 @@ import {
   AccountRefreshToken,
   AccountSignInDto,
   AccountSingUpDto,
+  AccountUpdate,
 } from '@/application/dto/account';
 import {
   Controller,
@@ -113,6 +114,18 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async signin(@Body() body: AccountSignInDto) {
     return this.authService.signin(body);
+  }
+
+  @Post('update')
+  @HttpCode(HttpStatus.OK)
+  async updateAccount(
+    @CurrentUser() userId: string,
+    @Body() body: AccountUpdate,
+  ) {
+    return await this.authService.updateAccount({
+      accountId: userId,
+      toUpdate: body,
+    });
   }
 
   @UseGuards(AuthGuard)

@@ -8,6 +8,7 @@ import {
   AccountForgetPassword,
   AccountSignInDto,
   AccountSingUpDto,
+  AccountUpdate,
 } from '@/application/dto/account';
 import { AccountsRepository } from '@/application/repositories/accounts-repository';
 import { AccountEntity } from '@/application/entities/account';
@@ -23,9 +24,13 @@ import { JwtOwnService } from '@/common/jwt/jwt.service';
 import { EmailService } from '@/application/email/email.service';
 import { RefreshTokensRepository } from '@/application/repositories/refreshs-tokens.repository';
 import { PasswordHasherService } from '@/common/password-hasher/password-hasher';
-import { IUpdateAccountProps } from '../settings/settings.service';
 // import { FunnelRepository } from '@/application/repositories/funnel.repository';
 // import { PipelineRepository } from '@/application/repositories/pipeline.repository';
+
+export interface IUpdateAccountProps {
+  accountId: string;
+  toUpdate: AccountUpdate;
+}
 
 @Injectable()
 export class AuthService {

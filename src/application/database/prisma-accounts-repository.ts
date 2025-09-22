@@ -157,8 +157,7 @@ export class PrismaAccountsRepository implements AccountsRepository {
   }
 
   async updateAccount(props: IUpdateAccountProps) {
-    const { accountId, toUpdate } = props;
-    const user = await this.searchAccountById(accountId);
+    const user = await this.searchAccountById(props.accountId);
 
     if (!user) {
       throw new AuthUserNotExists();
@@ -166,9 +165,9 @@ export class PrismaAccountsRepository implements AccountsRepository {
 
     await this.prisma.accounts.update({
       where: {
-        accountid: accountId,
+        accountid: props.accountId,
       },
-      data: this.createAccountToUpdate(toUpdate),
+      data: this.createAccountToUpdate(props.toUpdate),
     });
   }
 }
