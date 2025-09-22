@@ -49,7 +49,7 @@ export class PrismaTagsRepository implements TagsRepository {
 
   async getTagsByPage(page: number, limit: number): Promise<TagEntity[]> {
     const tagsFound = await this.prisma.tags.findMany({
-      skip: page * limit,
+      skip: (page - 1) * limit,
       take: limit,
     });
 
