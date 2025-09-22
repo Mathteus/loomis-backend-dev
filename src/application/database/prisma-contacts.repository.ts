@@ -4,9 +4,10 @@ import {
   IContactCreate,
   IContactDelete,
   IContactFilter,
-  IContactsRequest,
-  IContactsRequestAccount,
+  IContactsProps,
+  IContactsAccountProps,
   IContactUpdate,
+  IContactTagsProps,
 } from '../repositories/contacts-repository';
 import { PrismaService } from './config/prisma.service';
 import {
@@ -17,15 +18,83 @@ import {
   ContactNotFoundError,
   ContactRole,
   IContact,
-  IContactAccount,
-  ITag,
+  ContactAccount,
   convertPrismaToContactEntity,
 } from '../entities/contact';
 import { company_type, contacts, roles_contact } from '@prisma/client';
+import { TagEntity } from '../entities/tag';
 
 @Injectable()
 export class PrismaContactsRepository implements ContactsRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getTagsByContactId(contactId: string): Promise<TagEntity[]> {
+    const tagsContacts = await this.prisma.contacts_tags.findMany({
+      where: { contactid: contactId },
+    });
+
+    if (!tagsContacts) {
+      throw new ContactNotFoundError();
+    }
+
+    const tags = await this.prisma.tags.findMany({
+      where: { tagid: { in: tagsContacts.map((tag) => tag.tagid) } },
+    });
+
+    return (
+      tags.map((tag) => {
+        return new TagEntity({
+          tagid: tag.tagid,
+          title: tag.tagname,
+          color: tag.tagcolor,
+          bgColor: tag.tagcolor + '33',
+        });
+      }) ?? []
+    );
+  }
+
+  async addTagToContact(tag: IContactTagsProps): Promise<TagEntity[]> {
+    for (const tags of tag.tagIds) {
+      const tagFound = await this.prisma.contacts_tags.findFirst({
+        where: {
+          tagid: tags,
+          contactid: tag.contactId,
+        },
+      });
+
+      if (!tagFound) {
+        await this.prisma.contacts_tags.create({
+          data: {
+            contactid: tag.contactId,
+            tagid: tags,
+          },
+        });
+      }
+    }
+
+    return await this.getTagsByContactId(tag.contactId);
+  }
+
+  async removeTagFromContact(tag: IContactTagsProps): Promise<TagEntity[]> {
+    for (const tags of tag.tagIds) {
+      const tagFound = await this.prisma.contacts_tags.findFirst({
+        where: {
+          tagid: tags,
+          contactid: tag.contactId,
+        },
+      });
+
+      if (tagFound) {
+        await this.prisma.contacts_tags.delete({
+          where: {
+            contact_tag_id: tagFound?.contact_tag_id,
+          },
+        });
+      }
+    }
+
+    return await this.getTagsByContactId(tag.contactId);
+  }
 
   private async verifyContactNotExists(contactid: string) {
     const contact = await this.prisma.contacts.findFirst({
@@ -100,7 +169,7 @@ export class PrismaContactsRepository implements ContactsRepository {
   }
 
   async getContactsByAccount(
-    contact: IContactsRequestAccount,
+    contact: IContactsAccountProps,
   ): Promise<ContactEntity[]> {
     const linkExists = await this.prisma.contacts_accounts.findFirst({
       where: { accountid: contact.accountId },
@@ -113,7 +182,7 @@ export class PrismaContactsRepository implements ContactsRepository {
       where: { accountid: contact.accountId },
       select: { contactid: true },
     });
-    const contactIds = links.map((l: IContactAccount) => l.contactid);
+    const contactIds = links.map((l: ContactAccount) => l.contactid);
 
     const contacts = await this.prisma.contacts.findMany({
       where: { contactid: { in: contactIds } },
@@ -145,16 +214,19 @@ export class PrismaContactsRepository implements ContactsRepository {
       const contactsTag = await this.prisma.contacts_tags.findMany({
         where: { contactid: c.contactId },
       });
-      const tags: ITag[] = [];
+      const tags: TagEntity[] = [];
       for (const tag of contactsTag) {
         const tagFound = await this.prisma.tags.findFirst({
           where: { tagid: tag.tagid },
         });
-        tags.push({
-          title: tagFound?.tagname as string,
-          color: tagFound?.tagcolor as string,
-          bgColor: (tagFound?.tagcolor as string) + '33',
-        });
+        tags.push(
+          new TagEntity({
+            tagid: tagFound?.tagid as number,
+            title: tagFound?.tagname as string,
+            color: tagFound?.tagcolor as string,
+            bgColor: tagFound?.tagcolor + '33',
+          }),
+        );
       }
       c.tags = tags;
     }
@@ -162,21 +234,24 @@ export class PrismaContactsRepository implements ContactsRepository {
     return contactFormatted;
   }
 
-  async getContactById(contact: IContactsRequest): Promise<ContactEntity> {
+  async getContactById(contact: IContactsProps): Promise<ContactEntity> {
     const contactFound = await this.verifyContactNotExists(contact.contactId);
     const contactsTag = await this.prisma.contacts_tags.findMany({
       where: { contactid: contact.contactId },
     });
-    const tags: ITag[] = [];
+    const tags: TagEntity[] = [];
     for (const tag of contactsTag) {
       const tagFound = await this.prisma.tags.findFirst({
         where: { tagid: tag.tagid },
       });
-      tags.push({
-        title: tagFound?.tagname as string,
-        color: tagFound?.tagcolor as string,
-        bgColor: (tagFound?.tagcolor as string) + '33',
-      });
+      tags.push(
+        new TagEntity({
+          tagid: tagFound?.tagid as number,
+          title: tagFound?.tagname as string,
+          color: tagFound?.tagcolor as string,
+          bgColor: tagFound?.tagcolor + '33',
+        }),
+      );
     }
     const contactFormatted: IContact = {
       avatar_url: String(contactFound.avatar_url),

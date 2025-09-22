@@ -65,14 +65,21 @@ export class ContactService {
         city: props.contact.city,
         stateUF: props.contact.stateUF,
         segment: props.contact.segment,
-        tags: props.contact.tags ?? [],
+        tags: [],
       });
-      const employees = await this.contactsRepository.createContact({
+      const contacts = await this.contactsRepository.createContact({
         newContact,
         accountId: props.accountId,
         page: props.page,
       });
-      return employees.map((e) => {
+      const tagsCreated = await this.contactsRepository.addTagToContact({
+        contactId: newContact.contactId,
+        tagIds: props.contact.tags,
+      });
+      return contacts.map((e) => {
+        if (e.contactId === newContact.contactId) {
+          e.tags = tagsCreated;
+        }
         return e.toFrontend();
       });
     } catch (err) {
@@ -86,13 +93,13 @@ export class ContactService {
     }
   }
 
-  async getContactById(contact: IContactRequestProps) {
+  async getContactById(contactToFind: IContactRequestProps) {
     try {
-      const employee = await this.contactsRepository.getContactById({
-        contactId: contact?.contactId ?? '',
-        page: contact.page,
+      const contact = await this.contactsRepository.getContactById({
+        contactId: contactToFind?.contactId ?? '',
+        page: contactToFind.page,
       });
-      return employee.toFrontend();
+      return contact.toFrontend();
     } catch (err) {
       if (err instanceof ContactNotFoundError) {
         throw new NotFoundException(err.message);
@@ -106,11 +113,11 @@ export class ContactService {
 
   async getContactsByAccount(account: IContactRequestProps) {
     try {
-      const employees = await this.contactsRepository.getContactsByAccount({
+      const contacts = await this.contactsRepository.getContactsByAccount({
         accountId: account?.accountId ?? '',
         page: account.page,
       });
-      return employees.map((e) => {
+      return contacts.map((e) => {
         return e.toFrontend();
       });
     } catch (err) {
@@ -124,15 +131,15 @@ export class ContactService {
     }
   }
 
-  async updateContact(contact: IContactUpdateProps) {
+  async updateContact(contactToUpdate: IContactUpdateProps) {
     try {
-      const employees = await this.contactsRepository.updateContact({
-        contactId: contact.contactId,
-        toUpdate: contact.toUpdate,
-        accountId: contact.accountId,
-        page: contact.page,
+      const contacts = await this.contactsRepository.updateContact({
+        contactId: contactToUpdate.contactId,
+        toUpdate: contactToUpdate.toUpdate,
+        accountId: contactToUpdate.accountId,
+        page: contactToUpdate.page,
       });
-      return employees.map((e) => {
+      return contacts.map((e) => {
         return e.toFrontend();
       });
     } catch (err) {
@@ -146,18 +153,18 @@ export class ContactService {
     }
   }
 
-  async deleteContact(contact: IContactDeleteProps) {
+  async deleteContact(contactToDelete: IContactDeleteProps) {
     try {
-      if (contact?.accountId) {
+      if (contactToDelete?.accountId) {
         await this.contactsRepository.deleteByAccount({
-          contactId: contact.contactId,
-          accountId: contact.accountId,
+          contactId: contactToDelete.contactId,
+          accountId: contactToDelete.accountId,
         });
         return true;
       }
       await this.contactsRepository.deleteContact({
-        contactId: contact.contactId,
-        accountId: contact.jwtId,
+        contactId: contactToDelete.contactId,
+        accountId: contactToDelete.jwtId,
       });
       return true;
     } catch (err) {
@@ -186,12 +193,12 @@ export class ContactService {
 
   async getContactsByFilter(payload: IContactFilterProps) {
     try {
-      const employees = await this.contactsRepository.getContactsByFilter({
+      const contacts = await this.contactsRepository.getContactsByFilter({
         accountId: payload.accountId,
         query: payload.query,
         page: payload.page,
       });
-      return employees.map((e) => {
+      return contacts.map((e) => {
         return e.toFrontend();
       });
     } catch (err) {

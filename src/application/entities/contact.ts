@@ -3,6 +3,7 @@ import { NanoidGeneratorService } from '@/common/identifiers/nanoid-generator.se
 import { Replace } from '@/utility';
 import { company_type, contacts, genere, roles_contact } from '@prisma/client';
 import { companyTypeEnum } from './company';
+import { TagEntity } from './tag';
 
 export class ContactAlreadyExistsError extends Error {
   constructor() {
@@ -32,18 +33,12 @@ export enum ContactRole {
   collaborator = 'collaborator',
 }
 
-export interface ITag {
-  title: string;
-  color: string;
-  bgColor: string;
-}
-
-export interface IContactAccount {
+export type ContactAccount = {
   contact_accounts_id: string;
   contactid: string;
   accountid: string;
   created_at: Date;
-}
+};
 
 export interface IContact {
   contactId: string;
@@ -58,7 +53,7 @@ export interface IContact {
   city: string;
   stateUF: string;
   role: ContactRole;
-  tags: ITag[];
+  tags: TagEntity[];
   lead_source?: string | null;
   employeer?: string | null;
   segment?: companyTypeEnum | null;
@@ -211,7 +206,7 @@ export class ContactEntity {
     return this._self.employeer;
   }
 
-  set tags(tags: ITag[]) {
+  set tags(tags: TagEntity[]) {
     this._self.tags = tags;
   }
 
@@ -265,7 +260,7 @@ export class ContactEntity {
       employee: this._self.employeer,
       employeeName: this._self.employeer,
       funnel: this._self.funnel_name,
-      tags: this._self.tags,
+      tags: this._self.tags.map((tag) => tag.toFrontend()),
     };
   }
 }

@@ -1,4 +1,5 @@
 import { ContactEntity, IContact } from '../entities/contact';
+import { TagEntity } from '../entities/tag';
 
 export type Query = {
   field: string;
@@ -30,22 +31,27 @@ export interface IContactFilter {
   page: number;
 }
 
-export interface IContactsRequestAccount {
+export interface IContactsAccountProps {
   accountId: string;
   page: number;
 }
 
-export interface IContactsRequest {
+export interface IContactsProps {
   contactId: string;
   page: number;
+}
+
+export interface IContactTagsProps {
+  contactId: string;
+  tagIds: number[];
 }
 
 export abstract class ContactsRepository {
   abstract createContact(payload: IContactCreate): Promise<ContactEntity[]>;
   abstract getContactsByAccount(
-    contact: IContactsRequestAccount,
+    contact: IContactsAccountProps,
   ): Promise<ContactEntity[]>;
-  abstract getContactById(contact: IContactsRequest): Promise<ContactEntity>;
+  abstract getContactById(contact: IContactsProps): Promise<ContactEntity>;
   abstract updateContact(contact: IContactUpdate): Promise<ContactEntity[]>;
   abstract deleteContact(contact: IContactDelete): Promise<void>;
   abstract deleteByAccount(contact: IContactDelete): Promise<void>;
@@ -53,4 +59,7 @@ export abstract class ContactsRepository {
   abstract getContactsByFilter(
     filters: IContactFilter,
   ): Promise<ContactEntity[]>;
+  abstract getTagsByContactId(contactId: string): Promise<TagEntity[]>;
+  abstract addTagToContact(tag: IContactTagsProps): Promise<TagEntity[]>;
+  abstract removeTagFromContact(tag: IContactTagsProps): Promise<TagEntity[]>;
 }

@@ -1,11 +1,11 @@
 import {
+  ArrayMinSize,
   IsArray,
   IsDateString,
   IsEmail,
   IsEnum,
   IsNotEmpty,
   IsNumber,
-  IsObject,
   IsOptional,
   IsPhoneNumber,
   IsString,
@@ -13,7 +13,7 @@ import {
   IsUUID,
   Length,
 } from 'class-validator';
-import { ContactGenere, ContactRole, ITag } from '../entities/contact';
+import { ContactGenere, ContactRole } from '../entities/contact';
 import { companyTypeEnum } from '../entities/company';
 import { Query } from '../repositories/contacts-repository';
 
@@ -86,9 +86,10 @@ export class CreateContact {
   @IsNotEmpty()
   collaboratorId: string;
 
-  @IsObject()
-  @IsNotEmpty()
-  tags: ITag[];
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsNumber({}, { each: true })
+  tags: number[];
 
   @IsString()
   @IsOptional()
